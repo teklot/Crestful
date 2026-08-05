@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <ProjectReference Include="..\Crest\Crest.csproj" />
+    <ProjectReference Include="..\Crest.EFCore\Crest.EFCore.csproj" />
+    <ProjectReference Include="..\Crest.Validation\Crest.Validation.csproj" />
+  </ItemGroup>
+</Project>

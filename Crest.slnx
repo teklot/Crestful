@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Crest\Crest.csproj" />
+  <Project Path="Crest.EFCore\Crest.EFCore.csproj" />
+  <Project Path="Crest.Validation\Crest.Validation.csproj" />
+  <Project Path="Crest.Tests\Crest.Tests.csproj" />
+  <Project Path="Crest.Samples.Devices\Crest.Samples.Devices.csproj" />
+</Solution>

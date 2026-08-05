@@ -1,0 +1,36 @@
+namespace Crest;
+
+/// <summary>
+/// The persistence abstraction Crest uses to serve CRUD requests. Crest ships an in-memory
+/// implementation and <c>Crest.EFCore</c> ships an EF Core implementation; applications can
+/// also register their own.
+/// </summary>
+public interface IResourceDataSource<TResource> where TResource : class, IResource
+{
+    /// <summary>Returns every resource in the collection.</summary>
+    Task<IReadOnlyList<TResource>> ListAsync(CancellationToken cancellationToken);
+
+    /// <summary>Returns the resource with the given key, or <c>null</c> if absent.</summary>
+    Task<TResource?> GetAsync(object key, CancellationToken cancellationToken);
+
+    /// <summary>Persists a new resource and returns it (the key may be assigned).</summary>
+    Task<TResource> CreateAsync(TResource resource, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Applies the values of <paramref name="resource"/> to the existing <paramref name="original"/>
+    /// and persists the change. Returns <c>null</c> if the original no longer exists.
+    /// </summary>
+    Task<TResource?> UpdateAsync(TResource resource, TResource original, CancellationToken cancellationToken);
+
+    /// <summary>Deletes the resource with the given key. Returns <c>false</c> if absent.</summary>
+    Task<bool> DeleteAsync(object key, CancellationToken cancellationToken);
+}
+
+/// <summary>Raised by a data source when a create collides with an existing key.</summary>
+public sealed class ResourceConflictException : Exception
+{
+    public ResourceConflictException(string message)
+        : base(message)
+    {
+    }
+}
