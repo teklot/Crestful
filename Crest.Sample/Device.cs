@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Crest;
 
-namespace Crest.Samples.Devices;
+namespace Crest.Sample;
 
 /// <summary>
 /// A sample resource. Crest derives the full CRUD API (<c>/api/devices</c>) from this type.

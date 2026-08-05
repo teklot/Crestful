@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Crest.Samples.Devices;
+namespace Crest.Sample;
 
 public sealed class DeviceDbContext : DbContext
 {

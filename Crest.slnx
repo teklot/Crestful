@@ -3,5 +3,5 @@
   <Project Path="Crest.EFCore\Crest.EFCore.csproj" />
   <Project Path="Crest.Validation\Crest.Validation.csproj" />
   <Project Path="Crest.Tests\Crest.Tests.csproj" />
-  <Project Path="Crest.Samples.Devices\Crest.Samples.Devices.csproj" />
+  <Project Path="Crest.Sample\Crest.Sample.csproj" />
 </Solution>

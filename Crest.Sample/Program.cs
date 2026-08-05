@@ -1,6 +1,6 @@
 using Crest;
 using Crest.EFCore;
-using Crest.Samples.Devices;
+using Crest.Sample;
 using Crest.Validation;
 using Microsoft.EntityFrameworkCore;
 
