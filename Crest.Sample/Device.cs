@@ -16,4 +16,6 @@ public sealed class Device : IResource
 
     [StringLength(100)]
     public string? Model { get; set; }
+
+    public List<Reading> Readings { get; set; } = [];
 }

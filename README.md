@@ -1,8 +1,47 @@
-# Crest
+# Crest — Resource-First REST for ASP.NET Core
 
-Convention-first REST endpoints from strongly-typed resources for ASP.NET Core.
+[![CI](https://github.com/teklot/Crest/actions/workflows/ci.yml/badge.svg)](https://github.com/teklot/Crest/actions/workflows/ci.yml)
+[![NuGet Version](https://img.shields.io/nuget/v/Crest)](https://www.nuget.org/packages/Crest)
+[![.NET](https://img.shields.io/badge/.NET-net8.0%20%7C%20net10.0-blue)](https://dotnet.microsoft.com/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
-Crest is inspired by [Eve](https://docs.python-eve.org/), the REST framework for Python/Flask: describe a resource once and receive a production-ready REST API. Where Eve let Flask developers turn a class into a full CRUD service, Crest does the same for ASP.NET Core minimal APIs — while staying close to the platform and never locking you in.
+Every ASP.NET Core team I've worked with builds the same thing: a `Controller`, a `Service`, a repository, request DTOs, response DTOs, a mapper, validation logic, and a `ProblemDetails` handler — duplicated across every API, each with different conventions, none composable. The resource gets described three times (entity, request, response), and adding one endpoint means touching controller, service, DI, and mapping by hand.
+
+Crest is the convention layer that sits on top of ASP.NET Core — **define a resource once, receive a production-ready REST API.** Not an app framework, not an alternative to ASP.NET Core. A thin productivity layer between your resource model and your endpoints.
+
+**Guiding principle:** Never replace the Microsoft ecosystem. Generate infrastructure, not business logic.
+
+## The Problem
+
+```csharp
+// Typical API — every resource needs the same boilerplate, by hand:
+public sealed class Controller : ControllerBase
+{
+    [HttpGet]     public IActionResult List() => ...;
+    [HttpGet("{id}")] public IActionResult Get(int id) => ...;
+    [HttpPost]    public IActionResult Create(CreateDeviceRequest dto) => ...;
+    [HttpPut("{id}")]  public IActionResult Update(int id, UpdateDeviceRequest dto) => ...;
+    [HttpPatch("{id}")] public IActionResult Patch(int id, JsonPatchDocument<Device> patch) => ...;
+    [HttpDelete("{id}")] public IActionResult Delete(int id) => ...;
+    // + a service, a repository, a mapper, validators, ProblemDetails handlers...
+}
+```
+
+The resource is declared once and then re-declared as a request DTO, a response DTO, and again in EF. Validation, persistence wiring, and error handling are reinvented in every project. Teams that want CRUD infrastructure without adopting an opinionated app framework have no lightweight option on ASP.NET Core — the gap Eve filled for Python.
+
+**Crest eliminates the seam.** One strongly-typed class becomes the single source of truth, and the entire CRUD API derives from it.
+
+## How It Works
+
+```
+Resource (IResource)
+      ↓ discovered at startup
+Crest builds the ResourceModel
+      ↓
+Route group → Minimal API endpoints → Data source → Response
+      ↓              ↓                    ↓
+   Validation      Hooks            In-memory / EF Core
+```
 
 ```csharp
 public sealed class Device : IResource
@@ -13,30 +52,76 @@ public sealed class Device : IResource
 }
 ```
 
-That single class gives you `GET`, `GET/{id}`, `POST`, `PUT`, `PATCH`, and `DELETE` against `/api/devices`.
+That class — plus `AddResources()` and `MapResources()` — gives you `GET`, `GET/{id}`, `POST`, `PUT`, `PATCH`, and `DELETE` against `/api/devices`.
 
-## Features
+### Discovery, Zero Registration
 
-- **Resource discovery** — scan the calling/entry assemblies (or an explicit list) for `IResource` types; nothing to register per resource.
-- **Full CRUD generation** — list, get, create, update, patch, and delete endpoints via minimal APIs, with per-resource operation toggles.
-- **Persistence without ceremony** — a thread-safe in-memory data source is registered for every discovered resource; swap in EF Core with one call.
-- **Automatic validation** — Data Annotations by default, plus any FluentValidation validators found in your assemblies.
-- **Lifecycle hooks** — options-based and DI-based hooks that run before/after create, update, delete, and save.
-- **ProblemDetails errors** — 400 (invalid body/key/validation), 404 (missing resource), and 409 (key conflict) return standard `application/problem+json`.
-- **Custom endpoints** — add your own handlers under a resource's route group.
-- **Plain ASP.NET Core** — built on minimal APIs, route groups, and Microsoft DI. Every convention is overridable.
+`AddResources()` scans the calling assemblies for `IResource` types. No per-resource service registration, no DTO mapping, no manual endpoint mapping — add a class, restart, the API exists.
+
+### Persistence Without a Repository
+
+Every resource gets a thread-safe in-memory data source by default, so prototypes work with zero setup. When you're ready for a database, one call swaps EF Core in — Crest scans your `DbContext`s and backs every matching `DbSet<T>` resource with EF directly. No repository layer, no new abstraction.
+
+### Validation On by Default
+
+Data Annotations validate every create, update, and patch automatically. FluentValidation validators in your assemblies are discovered and applied the same way. Invalid input returns a standard `application/problem+json` with the offending properties.
+
+### Lifecycle Hooks
+
+Before/after hooks run around create, update, delete, and save — both configuration-based and dependency-injected. Audit logging, defaulting, side effects: every step of the lifecycle is an escape hatch.
+
+### Errors in the Standard Shape
+
+400 (bad request, key, or validation), 404 (missing), and 409 (conflict) all return ProblemDetails. No bespoke error formats.
+
+### Escape Hatches
+
+Every convention is overridable. Disable any operation per resource, override the route prefix, or map your own handlers onto a resource's route group — plain ASP.NET Core underneath, never a lock-in.
+
+## Use Cases
+
+### Rapid Prototypes
+
+`AddResources()` + in-memory storage = a complete CRUD API from a single class. Validate the data model first, add EF Core and FluentValidation when the shape stabilizes.
+
+### Internal Enterprise CRUD
+
+Standardized endpoints, validation, and error handling across every internal service. Teams agree on the resource model and get consistent API behavior for free.
+
+### SaaS & Admin Backends
+
+A resource definition is the contract. The same class drives the public API, an internal admin surface, and persistence — no parallel DTO hierarchies to keep in sync.
+
+## Technical Differentiators
+
+| vs. | Crest |
+|---|---|
+| **Hand-rolled controllers** | No controllers, services, repositories, or DTO mapping. The resource is the only artifact. |
+| **ABP framework** | Crest is a thin convention layer, not an application framework — no opinions on project structure, persistence, or front end. |
+| **EF Core alone** | EF gives you the store, not the API. Crest composes EF Core and adds endpoints, validation, hooks, and errors on top. |
+| **Eve (Python)** | The same resource-first model, on ASP.NET Core Minimal APIs — built on Microsoft DI, routing, and ProblemDetails. |
 
 ## Packages
 
 | Package | Description |
-| --- | --- |
-| `Crest` | Core framework: discovery, endpoint generation, in-memory data source, hooks. |
-| `Crest.EFCore` | EF Core-backed data sources via `AddEfCore` / `AddEfCoreResource`. |
-| `Crest.Validation` | Data Annotations + FluentValidation request validation via `AddResourceValidation`. |
+|---|---|
+| **Crest** | Core framework: resource discovery, endpoint generation, in-memory data source, hooks, custom endpoints, ProblemDetails. |
+| **Crest.EFCore** | EF Core-backed data sources via `AddEfCore` / `AddEfCoreResource` — DbContext discovery, no repository layer. |
+| **Crest.Validation** | Data Annotations + FluentValidation request validation via `AddResourceValidation`. |
 
 Multi-targeted at **net8.0** and **net10.0**.
 
-## Quick start
+## Installation
+
+```shell
+dotnet add package Crest
+dotnet add package Crest.EFCore
+dotnet add package Crest.Validation
+```
+
+For a minimal in-memory API, `Crest` alone is enough.
+
+## Quick Start
 
 ```csharp
 // Program.cs
@@ -56,21 +141,14 @@ app.MapResources();
 app.Run();
 ```
 
-For EF Core persistence:
+A complete runnable example lives in [`Crest.Sample`](Crest.Sample) — a device domain with a `Reading` sub-resource, EF Core persistence, seeded data, and validation.
 
-```csharp
-builder.Services.AddDbContext<DeviceDbContext>(o => o.UseInMemoryDatabase("devices"));
-builder.Services.AddEfCore();
-```
-
-A complete runnable example lives in [`Crest.Sample`](Crest.Sample).
-
-## Generated endpoints
+## Generated Endpoints
 
 For a resource `Device` (key `int`), with the default `api` route prefix:
 
 | Method | Route | Description |
-| --- | --- | --- |
+|---|---|---|
 | `GET` | `/api/devices` | List all devices |
 | `GET` | `/api/devices/{id}` | Get one device |
 | `POST` | `/api/devices` | Create a device |
@@ -78,11 +156,17 @@ For a resource `Device` (key `int`), with the default `api` route prefix:
 | `PATCH` | `/api/devices/{id}` | Partially update a device |
 | `DELETE` | `/api/devices/{id}` | Delete a device |
 
+Keys are discovered by convention — `[Key]`, `Id`, `{TypeName}Id`, or the type name with a trailing `Resource` stripped — and may be numeric, `Guid`, or `string`. Related resources are plain `IResource` classes with a foreign key; send a nested graph in one request and it persists in a single transaction.
+
+## Supported Frameworks
+
+- **.NET 8+**: `net8.0` and `net10.0` packages.
+- **ASP.NET Core Minimal APIs**: built on routing, DI, and ProblemDetails — no framework-specific hosting.
+
 ## Documentation
 
 - [Getting started](docs/GETTING_STARTED.md) — resources, keys, persistence, validation, hooks, and custom endpoints.
-- [Project requirements](crest_prd.md) — the product requirements document.
 
 ## License
 
-MIT
+[Apache 2.0](LICENSE)

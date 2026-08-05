@@ -17,6 +17,17 @@ public sealed class Device : IResource
     public bool IsActive { get; set; } = true;
 
     public int Quantity { get; set; }
+
+    public List<Reading> Readings { get; set; } = [];
+}
+
+public sealed class Reading : IResource
+{
+    public Guid Id { get; set; }
+
+    public int DeviceId { get; set; }
+
+    public double Value { get; set; }
 }
 
 public sealed class GuidResource : IResource

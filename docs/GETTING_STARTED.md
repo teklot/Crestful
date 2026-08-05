@@ -162,6 +162,37 @@ builder.Services.AddEfCoreResource<Device, DeviceDbContext>();
 
 > Tip: pass a stable database name to `UseInMemoryDatabase`. The configuration lambda can be invoked more than once, so a value generated inside it (e.g. `Guid.NewGuid().ToString()`) yields a different database per request.
 
+### Relationships & transactions
+
+Crest deliberately has no repository layer — the `DbContext` is the unit of work, so EF Core's relationship and transaction behavior works unchanged. Navigations are modeled as ordinary CLR properties; Crest's update path copies scalar properties only and never touches collections, so relationships survive create/update.
+
+A related resource is just another `IResource` with a foreign key (and its own generated endpoints):
+
+```csharp
+public sealed class Reading : IResource
+{
+    public Guid Id { get; set; }
+    public int DeviceId { get; set; }        // FK to Device
+    public double Value { get; set; }
+}
+
+public sealed class Device : IResource
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public List<Reading> Readings { get; set; } = [];
+}
+```
+
+Sending a nested graph in one request persists atomically — `SaveChanges` runs a single transaction, so the device and its readings either all persist or none do:
+
+```csharp
+POST /api/devices
+{ "name": "Gateway", "readings": [ { "value": 1.5 }, { "value": 2.5 } ] }
+```
+
+Guid keys (and other generated keys) are produced by EF Core when the value is left at its default.
+
 ### Custom data sources
 
 `IResourceDataSource<T>` is the persistence abstraction. Implement and register your own to take full control:

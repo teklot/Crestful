@@ -23,9 +23,13 @@ using (var scope = app.Services.CreateScope())
     db.Database.EnsureCreated();
     if (!db.Devices.Any())
     {
-        db.Devices.AddRange(
-            new Device { Name = "Thermostat", Model = "T-100" },
-            new Device { Name = "Smoke sensor", Model = "S-200" });
+        var thermostat = new Device { Name = "Thermostat", Model = "T-100" };
+        thermostat.Readings.Add(new Reading { Value = 21.5, Timestamp = DateTimeOffset.UtcNow.AddMinutes(-5) });
+
+        var smokeSensor = new Device { Name = "Smoke sensor", Model = "S-200" };
+        smokeSensor.Readings.Add(new Reading { Value = 0.02, Timestamp = DateTimeOffset.UtcNow.AddMinutes(-1) });
+
+        db.Devices.AddRange(thermostat, smokeSensor);
         db.SaveChanges();
     }
 }

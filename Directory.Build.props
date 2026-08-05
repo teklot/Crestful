@@ -10,7 +10,7 @@
     <Authors>Crest</Authors>
     <Product>Crest</Product>
     <Description>Crest - Convention-first REST endpoints from strongly-typed resources.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>rest;api;aspnetcore;minimal-api;efcore</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>

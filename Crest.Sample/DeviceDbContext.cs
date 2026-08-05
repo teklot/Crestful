@@ -10,4 +10,6 @@ public sealed class DeviceDbContext : DbContext
     }
 
     public DbSet<Device> Devices => Set<Device>();
+
+    public DbSet<Reading> Readings => Set<Reading>();
 }
