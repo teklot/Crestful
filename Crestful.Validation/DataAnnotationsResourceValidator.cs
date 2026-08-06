@@ -8,8 +8,10 @@ namespace Crestful.Validation;
 /// </summary>
 public sealed class DataAnnotationsResourceValidator : IResourceValidator
 {
+    /// <inheritdoc />
     public bool CanValidate(Type resourceType) => true;
 
+    /// <inheritdoc />
     public Task<ResourceValidationResult> ValidateAsync(ResourceValidationContext context, CancellationToken cancellationToken)
     {
         var results = new List<ValidationResult>();

@@ -4,6 +4,9 @@
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- The Web SDK sets WarnOnPackingNonPackableProject=true, which makes `dotnet pack` warn
+         on this non-packable project. This sample is intentionally not a package, so suppress it. -->
+    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
   </PropertyGroup>
 
   <ItemGroup>

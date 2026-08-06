@@ -48,12 +48,27 @@ public sealed class DeleteContext<TResource> : ResourceHookContext where TResour
 /// </summary>
 public interface IResourceHook<TResource> where TResource : class, IResource
 {
+    /// <summary>Runs before a resource is created.</summary>
     Task BeforeCreateAsync(CreateContext<TResource> context) => Task.CompletedTask;
+
+    /// <summary>Runs after a resource is created.</summary>
     Task AfterCreateAsync(CreateContext<TResource> context) => Task.CompletedTask;
+
+    /// <summary>Runs before a resource is updated.</summary>
     Task BeforeUpdateAsync(UpdateContext<TResource> context) => Task.CompletedTask;
+
+    /// <summary>Runs after a resource is updated.</summary>
     Task AfterUpdateAsync(UpdateContext<TResource> context) => Task.CompletedTask;
+
+    /// <summary>Runs before a resource is deleted.</summary>
     Task BeforeDeleteAsync(DeleteContext<TResource> context) => Task.CompletedTask;
+
+    /// <summary>Runs after a resource is deleted.</summary>
     Task AfterDeleteAsync(DeleteContext<TResource> context) => Task.CompletedTask;
+
+    /// <summary>Runs before the data source persists a change.</summary>
     Task BeforeSaveAsync(ResourceHookContext context) => Task.CompletedTask;
+
+    /// <summary>Runs after the data source persists a change.</summary>
     Task AfterSaveAsync(ResourceHookContext context) => Task.CompletedTask;
 }

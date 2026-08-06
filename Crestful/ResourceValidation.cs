@@ -20,6 +20,7 @@ public interface IResourceValidator
 /// <summary>Context passed to a validator.</summary>
 public sealed class ResourceValidationContext
 {
+    /// <summary>Creates a validation context for the given request, resource, and metadata.</summary>
     public ResourceValidationContext(HttpContext httpContext, object resource, ResourceInfo resourceInfo)
     {
         HttpContext = httpContext;
@@ -42,6 +43,7 @@ public sealed class ResourceValidationResult
 {
     private static readonly ResourceValidationResult Valid = new(Array.Empty<ResourceValidationError>());
 
+    /// <summary>Creates a validation result with the given <paramref name="errors"/>.</summary>
     public ResourceValidationResult(IReadOnlyList<ResourceValidationError> errors)
     {
         Errors = errors;
@@ -69,6 +71,7 @@ public sealed class ResourceValidationService
 {
     private readonly IServiceProvider _services;
 
+    /// <summary>Creates a validation service that resolves validators from <paramref name="services"/>.</summary>
     public ResourceValidationService(IServiceProvider services)
     {
         _services = services;

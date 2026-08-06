@@ -162,6 +162,7 @@ public class ResourceInfo
 /// </summary>
 public sealed class ResourceInfo<TResource> : ResourceInfo where TResource : class, IResource
 {
+    /// <summary>Creates resource metadata with strongly typed options.</summary>
     public ResourceInfo(Type resourceType, string routePrefix, ResourceOptions<TResource> options)
         : base(resourceType, routePrefix, options)
     {

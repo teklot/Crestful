@@ -12,13 +12,16 @@ public sealed class FluentValidationResourceValidator<TResource> : IResourceVali
 {
     private readonly IValidator<TResource> _validator;
 
+    /// <summary>Creates a validator wrapper around the given <paramref name="validator"/>.</summary>
     public FluentValidationResourceValidator(IValidator<TResource> validator)
     {
         _validator = validator;
     }
 
+    /// <inheritdoc />
     public bool CanValidate(Type resourceType) => resourceType == typeof(TResource);
 
+    /// <inheritdoc />
     public async Task<ResourceValidationResult> ValidateAsync(ResourceValidationContext context, CancellationToken cancellationToken)
     {
         if (context.Resource is not TResource resource)

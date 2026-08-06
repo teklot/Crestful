@@ -13,6 +13,7 @@ public sealed class InMemoryResourceDataSource<TResource> : IResourceDataSource<
     private readonly ResourceInfo<TResource> _info;
     private readonly ConcurrentDictionary<object, TResource> _store = new();
 
+    /// <summary>Creates a data source for the resource registered in <paramref name="registry"/>.</summary>
     public InMemoryResourceDataSource(ResourceRegistry registry)
     {
         _info = registry.Get<TResource>();
@@ -21,12 +22,15 @@ public sealed class InMemoryResourceDataSource<TResource> : IResourceDataSource<
     /// <summary>Number of items currently stored.</summary>
     public int Count => _store.Count;
 
+    /// <inheritdoc />
     public Task<IReadOnlyList<TResource>> ListAsync(CancellationToken cancellationToken)
         => Task.FromResult<IReadOnlyList<TResource>>(_store.Values.ToList());
 
+    /// <inheritdoc />
     public Task<TResource?> GetAsync(object key, CancellationToken cancellationToken)
         => Task.FromResult(_store.TryGetValue(key, out var item) ? item : null);
 
+    /// <inheritdoc />
     public Task<TResource> CreateAsync(TResource resource, CancellationToken cancellationToken)
     {
         var key = _info.GetKey(resource);
@@ -51,6 +55,7 @@ public sealed class InMemoryResourceDataSource<TResource> : IResourceDataSource<
         return Task.FromResult(resource);
     }
 
+    /// <inheritdoc />
     public Task<TResource?> UpdateAsync(TResource resource, TResource original, CancellationToken cancellationToken)
     {
         var key = _info.GetKey(original);
@@ -69,6 +74,7 @@ public sealed class InMemoryResourceDataSource<TResource> : IResourceDataSource<
         return Task.FromResult<TResource?>(original);
     }
 
+    /// <inheritdoc />
     public Task<bool> DeleteAsync(object key, CancellationToken cancellationToken)
         => Task.FromResult(_store.TryRemove(key, out _));
 

@@ -29,6 +29,7 @@ public interface IResourceDataSource<TResource> where TResource : class, IResour
 /// <summary>Raised by a data source when a create collides with an existing key.</summary>
 public sealed class ResourceConflictException : Exception
 {
+    /// <summary>Creates a conflict exception with the given <paramref name="message"/>.</summary>
     public ResourceConflictException(string message)
         : base(message)
     {

@@ -15,18 +15,22 @@ public sealed class EfCoreResourceDataSource<TResource, TDbContext> : IResourceD
     private readonly ResourceInfo _info;
     private readonly TDbContext _db;
 
+    /// <summary>Creates an EF Core data source for the resource registered in <paramref name="registry"/>, backed by <paramref name="db"/>.</summary>
     public EfCoreResourceDataSource(ResourceRegistry registry, TDbContext db)
     {
         _info = registry.Get(typeof(TResource));
         _db = db;
     }
 
+    /// <inheritdoc />
     public async Task<IReadOnlyList<TResource>> ListAsync(CancellationToken cancellationToken)
         => await _db.Set<TResource>().AsNoTracking().ToListAsync(cancellationToken);
 
+    /// <inheritdoc />
     public Task<TResource?> GetAsync(object key, CancellationToken cancellationToken)
         => _db.Set<TResource>().FindAsync(new[] { key }, cancellationToken).AsTask();
 
+    /// <inheritdoc />
     public async Task<TResource> CreateAsync(TResource resource, CancellationToken cancellationToken)
     {
         _db.Set<TResource>().Add(resource);
@@ -34,6 +38,7 @@ public sealed class EfCoreResourceDataSource<TResource, TDbContext> : IResourceD
         return resource;
     }
 
+    /// <inheritdoc />
     public async Task<TResource?> UpdateAsync(TResource resource, TResource original, CancellationToken cancellationToken)
     {
         if (_db.Entry(original).State == EntityState.Detached)
@@ -54,6 +59,7 @@ public sealed class EfCoreResourceDataSource<TResource, TDbContext> : IResourceD
         return original;
     }
 
+    /// <inheritdoc />
     public async Task<bool> DeleteAsync(object key, CancellationToken cancellationToken)
     {
         var existing = await _db.Set<TResource>().FindAsync(new[] { key }, cancellationToken);

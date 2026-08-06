@@ -1,14 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Title>Crestful.Validation</Title>
+    <Authors>TekLot,$(AssemblyName)</Authors>
+    <Description>Crestful.Validation adds automatic request validation to generated Crestful endpoints — Data Annotations by default, with FluentValidation validators discovered from your assemblies. Invalid input returns standard application/problem+json.</Description>
+    <Copyright>Copyright © 2026 TekLot</Copyright>
     <PackageId>Crestful.Validation</PackageId>
-    <AssemblyName>Crestful.Validation</AssemblyName>
-    <RootNamespace>Crestful.Validation</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageTags>Crestful;Validation;DataAnnotations;FluentValidation;REST;API;dotnet-library</PackageTags>
+    <PackageReleaseNotes>v0.1.0: Data Annotations and FluentValidation discovery via AddResourceValidation(), ProblemDetails validation errors.</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/teklot/Crestful</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/teklot/Crestful.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="FluentValidation" />
     <ProjectReference Include="..\Crestful\Crestful.csproj" />
-    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+
 </Project>

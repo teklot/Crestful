@@ -1,12 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Title>Crestful</Title>
+    <Authors>TekLot,$(AssemblyName)</Authors>
+    <Description>Crestful is the core convention-first REST framework for ASP.NET Core. Define a resource once and receive a production-ready CRUD API: automatic resource discovery, generated Minimal API endpoints (GET, GET/{id}, POST, PUT, PATCH, DELETE), a thread-safe in-memory data source, before/after lifecycle hooks, custom endpoints, and standardized ProblemDetails errors — plain ASP.NET Core underneath.</Description>
+    <Copyright>Copyright © 2026 TekLot</Copyright>
     <PackageId>Crestful</PackageId>
-    <AssemblyName>Crestful</AssemblyName>
-    <RootNamespace>Crestful</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageTags>Crestful;REST;AspNetCore;MinimalAPI;API;Framework;dotnet-library</PackageTags>
+    <PackageReleaseNotes>v0.1.0: resource discovery via AddResources(), generated CRUD endpoints via MapResources(), in-memory data source, lifecycle hooks, custom endpoint mapping, ProblemDetails error handling, .NET 8 and .NET 10 support.</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/teklot/Crestful</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/teklot/Crestful.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+
 </Project>
