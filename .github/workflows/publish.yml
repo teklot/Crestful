@@ -20,13 +20,13 @@ jobs:
           dotnet-version: latest
 
       - name: Restore
-        run: dotnet restore Crest.slnx
+        run: dotnet restore Crestful.slnx
 
       - name: Build
-        run: dotnet build Crest.slnx --configuration Release --no-restore
+        run: dotnet build Crestful.slnx --configuration Release --no-restore
 
       - name: Pack
-        run: dotnet pack Crest.slnx --configuration Release --no-build
+        run: dotnet pack Crestful.slnx --configuration Release --no-build
 
       - name: NuGet login (OIDC → temp API key)
         id: login

@@ -1,6 +1,6 @@
 # Getting started
 
-This guide walks through the core concepts of Crest: defining resources, enabling persistence, validating requests, wiring hooks, and extending routes.
+This guide walks through the core concepts of Crestful: defining resources, enabling persistence, validating requests, wiring hooks, and extending routes.
 
 - [Prerequisites](#prerequisites)
 - [Install](#install)
@@ -24,9 +24,9 @@ This guide walks through the core concepts of Crest: defining resources, enablin
 Add the NuGet packages you need:
 
 ```
-dotnet add package Crest
-dotnet add package Crest.EFCore       # EF Core persistence
-dotnet add package Crest.Validation   # DataAnnotations + FluentValidation
+dotnet add package Crestful
+dotnet add package Crestful.EFCore       # EF Core persistence
+dotnet add package Crestful.Validation   # DataAnnotations + FluentValidation
 ```
 
 ## Define a resource
@@ -35,7 +35,7 @@ A resource is any class that implements the marker interface `IResource`.
 
 ```csharp
 using System.ComponentModel.DataAnnotations;
-using Crest;
+using Crestful;
 
 public sealed class Device : IResource
 {
@@ -49,7 +49,7 @@ public sealed class Device : IResource
 }
 ```
 
-Crest derives everything from this type:
+Crestful derives everything from this type:
 
 - **Route** — the pluralized, lower-cased type name under the `api` prefix: `/api/devices`.
 - **Key** — the key property (see [Key properties](#key-properties)), used for `GET/PUT/PATCH/DELETE /{id}`.
@@ -80,10 +80,10 @@ app.MapResources();
 app.Run();
 ```
 
-- `AddResources` discovers `IResource` types and registers services for them. By default it scans the calling and entry assemblies; add more with `DiscoverFromAssemblyContaining<T>()` or by appending to `CrestOptions.Assemblies`.
+- `AddResources` discovers `IResource` types and registers services for them. By default it scans the calling and entry assemblies; add more with `DiscoverFromAssemblyContaining<T>()` or by appending to `CrestfulOptions.Assemblies`.
 - `AddResourceValidation` enables automatic request validation.
 - `MapResources` generates the CRUD endpoints for every discovered resource.
-- `UseExceptionHandler()` is optional but recommended; Crest surfaces domain errors as `ProblemDetails` and lets the exception handler format unexpected failures.
+- `UseExceptionHandler()` is optional but recommended; Crestful surfaces domain errors as `ProblemDetails` and lets the exception handler format unexpected failures.
 
 To map a single resource, use `app.MapResource<Device>()`.
 
@@ -103,7 +103,7 @@ With an empty prefix, `Device` is served at `/devices`.
 
 ## Key properties
 
-Crest finds the key property using the first rule that matches, in this order:
+Crestful finds the key property using the first rule that matches, in this order:
 
 1. A property decorated with `[Key]`
 2. `Id` (case-insensitive)
@@ -133,14 +133,14 @@ Keys that are left at their default value are generated automatically:
 
 ## Persistence
 
-Crest registers a thread-safe in-memory data source (`InMemoryResourceDataSource<T>`) for every discovered resource, so `AddResources` alone is enough for prototypes and tests.
+Crestful registers a thread-safe in-memory data source (`InMemoryResourceDataSource<T>`) for every discovered resource, so `AddResources` alone is enough for prototypes and tests.
 
 ### EF Core
 
 Register your `DbContext` and call `AddEfCore` to back every matching resource with EF Core:
 
 ```csharp
-using Crest.EFCore;
+using Crestful.EFCore;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class DeviceDbContext : DbContext
@@ -164,7 +164,7 @@ builder.Services.AddEfCoreResource<Device, DeviceDbContext>();
 
 ### Relationships & transactions
 
-Crest deliberately has no repository layer — the `DbContext` is the unit of work, so EF Core's relationship and transaction behavior works unchanged. Navigations are modeled as ordinary CLR properties; Crest's update path copies scalar properties only and never touches collections, so relationships survive create/update.
+Crestful deliberately has no repository layer — the `DbContext` is the unit of work, so EF Core's relationship and transaction behavior works unchanged. Navigations are modeled as ordinary CLR properties; Crestful's update path copies scalar properties only and never touches collections, so relationships survive create/update.
 
 A related resource is just another `IResource` with a foreign key (and its own generated endpoints):
 
@@ -317,7 +317,7 @@ The generated endpoints return RFC 7807 ProblemDetails responses:
 
 ## Configuration reference
 
-### `CrestOptions` (passed to `AddResources`)
+### `CrestfulOptions` (passed to `AddResources`)
 
 | Member | Default | Description |
 | --- | --- | --- |

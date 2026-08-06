@@ -7,9 +7,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
     <Version>0.1.0</Version>
-    <Authors>Crest</Authors>
-    <Product>Crest</Product>
-    <Description>Crest - Convention-first REST endpoints from strongly-typed resources.</Description>
+    <Authors>Crestful</Authors>
+    <Product>Crestful</Product>
+    <Description>Crestful - Convention-first REST endpoints from strongly-typed resources.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>rest;api;aspnetcore;minimal-api;efcore</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>

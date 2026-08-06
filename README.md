@@ -1,15 +1,17 @@
-# Crest — Resource-First REST for ASP.NET Core
+# Crestful — Resource-First REST for ASP.NET Core
 
-[![CI](https://github.com/teklot/Crest/actions/workflows/ci.yml/badge.svg)](https://github.com/teklot/Crest/actions/workflows/ci.yml)
-[![NuGet Version](https://img.shields.io/nuget/v/Crest)](https://www.nuget.org/packages/Crest)
+[![CI](https://github.com/teklot/Crestful/actions/workflows/ci.yml/badge.svg)](https://github.com/teklot/Crestful/actions/workflows/ci.yml)
+[![NuGet Version](https://img.shields.io/nuget/v/Crestful)](https://www.nuget.org/packages/Crestful)
 [![.NET](https://img.shields.io/badge/.NET-net8.0%20%7C%20net10.0-blue)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
 Every ASP.NET Core team I've worked with builds the same thing: a `Controller`, a `Service`, a repository, request DTOs, response DTOs, a mapper, validation logic, and a `ProblemDetails` handler — duplicated across every API, each with different conventions, none composable. The resource gets described three times (entity, request, response), and adding one endpoint means touching controller, service, DI, and mapping by hand.
 
-Crest is the convention layer that sits on top of ASP.NET Core — **define a resource once, receive a production-ready REST API.** Not an app framework, not an alternative to ASP.NET Core. A thin productivity layer between your resource model and your endpoints.
+Crestful is the convention layer that sits on top of ASP.NET Core — **define a resource once, receive a production-ready REST API.** Not an app framework, not an alternative to ASP.NET Core. A thin productivity layer between your resource model and your endpoints.
 
 **Guiding principle:** Never replace the Microsoft ecosystem. Generate infrastructure, not business logic.
+
+**Crest** stands for **C**onvention-first **R**EST **E**ndpoints from **S**trongly-**T**yped resources; *Crestful* is the play on RESTful.
 
 ## The Problem
 
@@ -29,14 +31,14 @@ public sealed class Controller : ControllerBase
 
 The resource is declared once and then re-declared as a request DTO, a response DTO, and again in EF. Validation, persistence wiring, and error handling are reinvented in every project. Teams that want CRUD infrastructure without adopting an opinionated app framework have no lightweight option on ASP.NET Core — the gap Eve filled for Python.
 
-**Crest eliminates the seam.** One strongly-typed class becomes the single source of truth, and the entire CRUD API derives from it.
+**Crestful eliminates the seam.** One strongly-typed class becomes the single source of truth, and the entire CRUD API derives from it.
 
 ## How It Works
 
 ```
 Resource (IResource)
       ↓ discovered at startup
-Crest builds the ResourceModel
+Crestful builds the ResourceModel
       ↓
 Route group → Minimal API endpoints → Data source → Response
       ↓              ↓                    ↓
@@ -60,7 +62,7 @@ That class — plus `AddResources()` and `MapResources()` — gives you `GET`, `
 
 ### Persistence Without a Repository
 
-Every resource gets a thread-safe in-memory data source by default, so prototypes work with zero setup. When you're ready for a database, one call swaps EF Core in — Crest scans your `DbContext`s and backs every matching `DbSet<T>` resource with EF directly. No repository layer, no new abstraction.
+Every resource gets a thread-safe in-memory data source by default, so prototypes work with zero setup. When you're ready for a database, one call swaps EF Core in — Crestful scans your `DbContext`s and backs every matching `DbSet<T>` resource with EF directly. No repository layer, no new abstraction.
 
 ### Validation On by Default
 
@@ -94,40 +96,40 @@ A resource definition is the contract. The same class drives the public API, an 
 
 ## Technical Differentiators
 
-| vs. | Crest |
+| vs. | Crestful |
 |---|---|
 | **Hand-rolled controllers** | No controllers, services, repositories, or DTO mapping. The resource is the only artifact. |
-| **ABP framework** | Crest is a thin convention layer, not an application framework — no opinions on project structure, persistence, or front end. |
-| **EF Core alone** | EF gives you the store, not the API. Crest composes EF Core and adds endpoints, validation, hooks, and errors on top. |
+| **ABP framework** | Crestful is a thin convention layer, not an application framework — no opinions on project structure, persistence, or front end. |
+| **EF Core alone** | EF gives you the store, not the API. Crestful composes EF Core and adds endpoints, validation, hooks, and errors on top. |
 | **Eve (Python)** | The same resource-first model, on ASP.NET Core Minimal APIs — built on Microsoft DI, routing, and ProblemDetails. |
 
 ## Packages
 
 | Package | Description |
 |---|---|
-| **Crest** | Core framework: resource discovery, endpoint generation, in-memory data source, hooks, custom endpoints, ProblemDetails. |
-| **Crest.EFCore** | EF Core-backed data sources via `AddEfCore` / `AddEfCoreResource` — DbContext discovery, no repository layer. |
-| **Crest.Validation** | Data Annotations + FluentValidation request validation via `AddResourceValidation`. |
+| **Crestful** | Core framework: resource discovery, endpoint generation, in-memory data source, hooks, custom endpoints, ProblemDetails. |
+| **Crestful.EFCore** | EF Core-backed data sources via `AddEfCore` / `AddEfCoreResource` — DbContext discovery, no repository layer. |
+| **Crestful.Validation** | Data Annotations + FluentValidation request validation via `AddResourceValidation`. |
 
 Multi-targeted at **net8.0** and **net10.0**.
 
 ## Installation
 
 ```shell
-dotnet add package Crest
-dotnet add package Crest.EFCore
-dotnet add package Crest.Validation
+dotnet add package Crestful
+dotnet add package Crestful.EFCore
+dotnet add package Crestful.Validation
 ```
 
-For a minimal in-memory API, `Crest` alone is enough.
+For a minimal in-memory API, `Crestful` alone is enough.
 
 ## Quick Start
 
 ```csharp
 // Program.cs
-using Crest;
-using Crest.EFCore;
-using Crest.Validation;
+using Crestful;
+using Crestful.EFCore;
+using Crestful.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -141,7 +143,7 @@ app.MapResources();
 app.Run();
 ```
 
-A complete runnable example lives in [`Crest.Sample`](Crest.Sample) — a device domain with a `Reading` sub-resource, EF Core persistence, seeded data, and validation.
+A complete runnable example lives in [`Crestful.Sample`](Crestful.Sample) — a device domain with a `Reading` sub-resource, EF Core persistence, seeded data, and validation.
 
 ## Generated Endpoints
 

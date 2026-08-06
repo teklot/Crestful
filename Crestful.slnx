@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="Crestful\Crestful.csproj" />
+  <Project Path="Crestful.EFCore\Crestful.EFCore.csproj" />
+  <Project Path="Crestful.Validation\Crestful.Validation.csproj" />
+  <Project Path="Crestful.Tests\Crestful.Tests.csproj" />
+  <Project Path="Crestful.Sample\Crestful.Sample.csproj" />
+</Solution>
