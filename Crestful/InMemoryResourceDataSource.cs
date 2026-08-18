@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Crestful.Query;
 
 namespace Crestful;
 
@@ -25,6 +26,10 @@ public sealed class InMemoryResourceDataSource<TResource> : IResourceDataSource<
     /// <inheritdoc />
     public Task<IReadOnlyList<TResource>> ListAsync(CancellationToken cancellationToken)
         => Task.FromResult<IReadOnlyList<TResource>>(_store.Values.ToList());
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<TResource>> ListAsync(ResourceQueryContext query, CancellationToken cancellationToken)
+        => Task.FromResult<IReadOnlyList<TResource>>(InMemoryQueryTranslator.Apply(_store.Values, query, _info));
 
     /// <inheritdoc />
     public Task<TResource?> GetAsync(object key, CancellationToken cancellationToken)

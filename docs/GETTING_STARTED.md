@@ -1,6 +1,6 @@
 # Getting started
 
-This guide walks through the core concepts of Crestful: defining resources, enabling persistence, validating requests, wiring hooks, and extending routes.
+This guide walks through the core concepts of Crestful: defining resources, enabling persistence, validating requests, wiring hooks, querying collections, and extending routes.
 
 - [Prerequisites](#prerequisites)
 - [Install](#install)
@@ -12,6 +12,7 @@ This guide walks through the core concepts of Crestful: defining resources, enab
 - [Hooks](#hooks)
 - [Custom endpoints](#custom-endpoints)
 - [Error handling](#error-handling)
+- [Query engine](#query-engine)
 - [Configuration reference](#configuration-reference)
 
 ## Prerequisites
@@ -315,6 +316,73 @@ The generated endpoints return RFC 7807 ProblemDetails responses:
 | `404` | No resource exists with the given key |
 | `409` | A create collides with an existing key |
 
+## Query engine
+
+The list endpoint supports Eve-style query parameters for filtering, sorting, pagination, search, and field selection.
+
+### Filtering (`?where=`)
+
+Filter by passing a JSON object in the `where` query parameter:
+
+```
+GET /api/devices?where={"Name":"Thermostat"}
+GET /api/devices?where={"IsActive":true}
+GET /api/devices?where={"Quantity":5}
+```
+
+### Sorting (`?sort=`)
+
+Sort by one or more fields. Prefix with `-` for descending order:
+
+```
+GET /api/devices?sort=Name          # ascending by Name
+GET /api/devices?sort=-Quantity     # descending by Quantity
+GET /api/devices?sort=Model,-Name   # ascending by Model, then descending by Name
+```
+
+### Pagination (`?page=&max_results=`)
+
+Paginate results. `max_results` also works standalone to limit the result count:
+
+```
+GET /api/devices?page=1&max_results=10    # first page, 10 items
+GET /api/devices?max_results=5            # first 5 items
+```
+
+Default page size is 25. Maximum page size defaults to 100.
+
+### Search (`?search=`)
+
+Full-text search across all string properties:
+
+```
+GET /api/devices?search=temperature
+```
+
+### Field selection (`?field=`)
+
+Return only specified fields:
+
+```
+GET /api/devices?field=Name,Model
+```
+
+### Per-resource query configuration
+
+Configure query behavior per resource:
+
+```csharp
+app.MapResource<Device>(o =>
+{
+    o.Query.MaxPageSize = 50;           // cap max_results at 50
+    o.Query.DefaultPageSize = 10;       // default page size when only ?page= is used
+    o.Query.SearchEnabled = false;      // disable search for this resource
+    o.Query.FieldSelectionEnabled = false; // disable field selection
+    o.Query.AllowedFilterFields = ["Name", "Model"]; // restrict filterable fields
+    o.Query.AllowedSortFields = ["Name", "CreatedAt"]; // restrict sortable fields
+});
+```
+
 ## Configuration reference
 
 ### `CrestfulOptions` (passed to `AddResources`)
@@ -336,6 +404,7 @@ The generated endpoints return RFC 7807 ProblemDetails responses:
 | `CreateEnabled` | `true` | Generate `POST` |
 | `UpdateEnabled` | `true` | Generate `PUT` and `PATCH` |
 | `DeleteEnabled` | `true` | Generate `DELETE` |
+| `Query` | default | Query engine configuration (see [Query engine](#query-engine)) |
 
 For example, disable delete and rename the route globally:
 

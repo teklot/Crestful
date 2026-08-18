@@ -10,6 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentHtml.Core" />
+    <PackageReference Include="FluentHtml.Http" />
+    <PackageReference Include="FluentHtml.Bootstrap" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <ProjectReference Include="..\Crestful\Crestful.csproj" />
     <ProjectReference Include="..\Crestful.EFCore\Crestful.EFCore.csproj" />

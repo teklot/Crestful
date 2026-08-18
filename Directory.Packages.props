@@ -4,6 +4,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageVersion Include="FluentHtml.Core" Version="0.2.0" />
+    <PackageVersion Include="FluentHtml.Http" Version="0.2.0" />
+    <PackageVersion Include="FluentHtml.Bootstrap" Version="0.2.0" />
     <PackageVersion Include="FluentValidation" Version="11.11.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.11" />

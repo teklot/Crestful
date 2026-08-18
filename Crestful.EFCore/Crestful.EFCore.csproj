@@ -10,7 +10,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>Crestful;EFCore;EntityFrameworkCore;Persistence;REST;API;dotnet-library</PackageTags>
-    <PackageReleaseNotes>v0.1.0: DbContext discovery via AddEfCore(), explicit per-resource registration via AddEfCoreResource&lt;TResource,TDbContext&gt;(), scoped data sources backed directly by the DbContext.</PackageReleaseNotes>
+    <PackageReleaseNotes>EF Core query translation for filtering, sorting, pagination, search, and field selection — translates ResourceQueryContext to LINQ expressions.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/teklot/Crestful</PackageProjectUrl>
     <RepositoryUrl>https://github.com/teklot/Crestful.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

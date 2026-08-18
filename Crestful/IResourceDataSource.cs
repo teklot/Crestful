@@ -1,3 +1,5 @@
+using Crestful.Query;
+
 namespace Crestful;
 
 /// <summary>
@@ -9,6 +11,10 @@ public interface IResourceDataSource<TResource> where TResource : class, IResour
 {
     /// <summary>Returns every resource in the collection.</summary>
     Task<IReadOnlyList<TResource>> ListAsync(CancellationToken cancellationToken);
+
+    /// <summary>Returns resources matching the given query.</summary>
+    Task<IReadOnlyList<TResource>> ListAsync(ResourceQueryContext query, CancellationToken cancellationToken)
+        => ListAsync(cancellationToken);
 
     /// <summary>Returns the resource with the given key, or <c>null</c> if absent.</summary>
     Task<TResource?> GetAsync(object key, CancellationToken cancellationToken);

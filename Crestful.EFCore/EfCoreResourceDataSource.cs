@@ -1,5 +1,6 @@
 using System.Reflection;
 using Crestful;
+using Crestful.Query;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crestful.EFCore;
@@ -25,6 +26,14 @@ public sealed class EfCoreResourceDataSource<TResource, TDbContext> : IResourceD
     /// <inheritdoc />
     public async Task<IReadOnlyList<TResource>> ListAsync(CancellationToken cancellationToken)
         => await _db.Set<TResource>().AsNoTracking().ToListAsync(cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TResource>> ListAsync(ResourceQueryContext query, CancellationToken cancellationToken)
+    {
+        var source = _db.Set<TResource>().AsNoTracking();
+        var result = EfCoreQueryTranslator.Apply(source, query, (ResourceInfo<TResource>)_info);
+        return await result.ToListAsync(cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task<TResource?> GetAsync(object key, CancellationToken cancellationToken)

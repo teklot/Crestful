@@ -26,6 +26,42 @@ public class ResourceOptions
 
     /// <summary>Whether DELETE is generated. Defaults to <c>true</c>.</summary>
     public bool DeleteEnabled { get; set; } = true;
+
+    /// <summary>Query engine configuration for the list endpoint.</summary>
+    public ResourceQueryOptions Query { get; set; } = new();
+}
+
+/// <summary>
+/// Configuration for the query engine on a per-resource basis.
+/// </summary>
+public class ResourceQueryOptions
+{
+    /// <summary>
+    /// Fields allowed for filtering via <c>?where=</c>. Defaults to all fields.
+    /// Set to restrict which properties clients can query.
+    /// </summary>
+    public HashSet<string> AllowedFilterFields { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Fields allowed for sorting via <c>?sort=</c>. Defaults to all fields.
+    /// Set to restrict which properties clients can sort by.
+    /// </summary>
+    public HashSet<string> AllowedSortFields { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Default page size when <c>?page=</c> is provided without <c>?max_results=</c>. Defaults to 25.</summary>
+    public int DefaultPageSize { get; set; } = 25;
+
+    /// <summary>Maximum page size allowed for <c>?max_results=</c>. Defaults to 100. Set to 0 for unlimited.</summary>
+    public int MaxPageSize { get; set; } = 100;
+
+    /// <summary>Whether full-text search via <c>?search=</c> is enabled. Defaults to <c>true</c>.</summary>
+    public bool SearchEnabled { get; set; } = true;
+
+    /// <summary>Whether field selection via <c>?field=</c> is enabled. Defaults to <c>true</c>.</summary>
+    public bool FieldSelectionEnabled { get; set; } = true;
+
+    /// <summary>Whether relationship embedding via <c>?embedded=</c> is enabled. Defaults to <c>true</c>.</summary>
+    public bool EmbeddingEnabled { get; set; } = true;
 }
 
 /// <summary>

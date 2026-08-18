@@ -5,7 +5,7 @@
 [![.NET](https://img.shields.io/badge/.NET-net8.0%20%7C%20net10.0-blue)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
-Every ASP.NET Core team I've worked with builds the same thing: a `Controller`, a `Service`, a repository, request DTOs, response DTOs, a mapper, validation logic, and a `ProblemDetails` handler — duplicated across every API, each with different conventions, none composable. The resource gets described three times (entity, request, response), and adding one endpoint means touching controller, service, DI, and mapping by hand.
+Most ASP.NET Core teams build the same thing: a `Controller`, a `Service`, a repository, request DTOs, response DTOs, a mapper, validation logic, and a `ProblemDetails` handler — duplicated across every API, each with different conventions, none composable. The resource gets described three times (entity, request, response), and adding one endpoint means touching controller, service, DI, and mapping by hand.
 
 Crestful is the convention layer that sits on top of ASP.NET Core — **define a resource once, receive a production-ready REST API.** Not an app framework, not an alternative to ASP.NET Core. A thin productivity layer between your resource model and your endpoints.
 
@@ -42,7 +42,9 @@ Crestful builds the ResourceModel
       ↓
 Route group → Minimal API endpoints → Data source → Response
       ↓              ↓                    ↓
-   Validation      Hooks            In-memory / EF Core
+   Validation      Hooks           In-memory / EF Core
+      ↓
+   Query Engine (?where=, ?sort=, ?page=, ?search=, ?field=)
 ```
 
 ```csharp
@@ -54,7 +56,7 @@ public sealed class Device : IResource
 }
 ```
 
-That class — plus `AddResources()` and `MapResources()` — gives you `GET`, `GET/{id}`, `POST`, `PUT`, `PATCH`, and `DELETE` against `/api/devices`.
+That class — plus `AddResources()` and `MapResources()` — gives you `GET`, `GET/{id}`, `POST`, `PUT`, `PATCH`, and `DELETE` against `/api/devices`. Add `?where=`, `?sort=`, `?page=`, `?search=`, and `?field=` query parameters and the list endpoint filters, sorts, paginates, searches, and selects fields — all from the resource class alone.
 
 ### Discovery, Zero Registration
 
@@ -75,6 +77,20 @@ Before/after hooks run around create, update, delete, and save — both configur
 ### Errors in the Standard Shape
 
 400 (bad request, key, or validation), 404 (missing), and 409 (conflict) all return ProblemDetails. No bespoke error formats.
+
+### Query Engine
+
+The list endpoint supports Eve-style query parameters out of the box — filtering, sorting, pagination, full-text search, and field selection. No query code to write:
+
+```
+GET /api/devices?where={"Name":"Thermostat"}
+GET /api/devices?sort=-Name
+GET /api/devices?page=2&max_results=10
+GET /api/devices?search=smoke
+GET /api/devices?field=Name,Model
+```
+
+Per-resource configuration controls allowed filter/sort fields, page sizes, and feature toggles.
 
 ### Escape Hatches
 
@@ -107,8 +123,8 @@ A resource definition is the contract. The same class drives the public API, an 
 
 | Package | Description |
 |---|---|
-| **Crestful** | Core framework: resource discovery, endpoint generation, in-memory data source, hooks, custom endpoints, ProblemDetails. |
-| **Crestful.EFCore** | EF Core-backed data sources via `AddEfCore` / `AddEfCoreResource` — DbContext discovery, no repository layer. |
+| **Crestful** | Core framework: resource discovery, endpoint generation, in-memory data source, query engine, hooks, custom endpoints, ProblemDetails. |
+| **Crestful.EFCore** | EF Core-backed data sources via `AddEfCore` / `AddEfCoreResource` — DbContext discovery, query translation, no repository layer. |
 | **Crestful.Validation** | Data Annotations + FluentValidation request validation via `AddResourceValidation`. |
 
 Multi-targeted at **net8.0** and **net10.0**.
@@ -151,7 +167,7 @@ For a resource `Device` (key `int`), with the default `api` route prefix:
 
 | Method | Route | Description |
 |---|---|---|
-| `GET` | `/api/devices` | List all devices |
+| `GET` | `/api/devices` | List all devices (supports `?where=`, `?sort=`, `?page=`, `?max_results=`, `?search=`, `?field=`) |
 | `GET` | `/api/devices/{id}` | Get one device |
 | `POST` | `/api/devices` | Create a device |
 | `PUT` | `/api/devices/{id}` | Replace a device |
@@ -167,7 +183,7 @@ Keys are discovered by convention — `[Key]`, `Id`, `{TypeName}Id`, or the type
 
 ## Documentation
 
-- [Getting started](docs/GETTING_STARTED.md) — resources, keys, persistence, validation, hooks, and custom endpoints.
+- [Getting started](docs/GETTING_STARTED.md) — resources, keys, persistence, validation, hooks, query engine, and custom endpoints.
 
 ## License
 

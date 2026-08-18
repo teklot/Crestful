@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Crestful.Query;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,7 +24,17 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
     public async Task<IResult> ListAsync(HttpContext http)
     {
         var dataSource = ResolveDataSource(http);
-        var items = await dataSource.ListAsync(http.RequestAborted);
+        var query = QueryParameterParser.Parse(http, _info.Options.Query);
+        var items = await dataSource.ListAsync(query, http.RequestAborted);
+
+        if (query.Fields is { Count: > 0 })
+        {
+            var json = JsonSerializer.Serialize(items, JsonOptions);
+            var doc = JsonDocument.Parse(json);
+            var filtered = FilterJsonProperties(doc.RootElement, query.Fields);
+            return Results.Json(filtered, JsonOptions);
+        }
+
         return Results.Json(items, JsonOptions);
     }
 
@@ -358,5 +369,32 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
             foreach (var hook in hooks) await hook.AfterSaveAsync(context);
             if (_info.Options.AfterSave is { } handler) await handler(context);
         }
+    }
+
+    private static JsonArray FilterJsonProperties(JsonElement element, IReadOnlyList<string> fields)
+    {
+        var result = new JsonArray();
+        if (element.ValueKind != JsonValueKind.Array)
+        {
+            return result;
+        }
+
+        var namingPolicy = JsonOptions.PropertyNamingPolicy;
+        var fieldSet = new HashSet<string>(fields, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var item in element.EnumerateArray())
+        {
+            var obj = new JsonObject();
+            foreach (var prop in item.EnumerateObject())
+            {
+                if (fieldSet.Contains(prop.Name))
+                {
+                    obj[prop.Name] = JsonNode.Parse(prop.Value.GetRawText());
+                }
+            }
+            result.Add(obj);
+        }
+
+        return result;
     }
 }
