@@ -56,7 +56,7 @@ public sealed class Device : IResource
 }
 ```
 
-That class — plus `AddResources()` and `MapResources()` — gives you `GET`, `GET/{id}`, `POST`, `PUT`, `PATCH`, and `DELETE` against `/api/devices`. Add `?where=`, `?sort=`, `?page=`, `?search=`, and `?field=` query parameters and the list endpoint filters, sorts, paginates, searches, and selects fields — all from the resource class alone.
+That class — plus `AddResources()` and `MapResources()` — gives you `GET`, `GET/{id}`, `POST`, `PUT`, `PATCH`, and `DELETE` against `/api/devices`. Add `?where=`, `?sort=`, `?page=`, `?search=`, and `?field=` query parameters and the list endpoint filters, sorts, paginates, searches, and selects fields. Implement `ISoftDeletable` and enable soft delete to get automatic soft-delete behavior with restore on PUT/PATCH.
 
 ### Discovery, Zero Registration
 
@@ -91,6 +91,26 @@ GET /api/devices?field=Name,Model
 ```
 
 Per-resource configuration controls allowed filter/sort fields, page sizes, and feature toggles.
+
+### Soft Delete
+
+Resources that implement `ISoftDeletable` opt into soft delete. The endpoints stay the same, but the behavior changes:
+
+- **DELETE** stamps `DeletedAt` instead of removing the record
+- **GET /{id}** returns 404 for soft-deleted items
+- **GET /** automatically excludes soft-deleted items from results
+- **PUT / PATCH** on a soft-deleted item restores it (clears `DeletedAt`)
+
+```csharp
+public sealed class Device : IResource, ISoftDeletable
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public DateTimeOffset? DeletedAt { get; set; }
+}
+
+app.MapResource<Device>(o => o.SoftDelete.Enabled = true);
+```
 
 ### Escape Hatches
 
@@ -183,7 +203,7 @@ Keys are discovered by convention — `[Key]`, `Id`, `{TypeName}Id`, or the type
 
 ## Documentation
 
-- [Getting started](docs/GETTING_STARTED.md) — resources, keys, persistence, validation, hooks, query engine, and custom endpoints.
+- [Getting started](docs/GETTING_STARTED.md) — resources, keys, persistence, validation, hooks, query engine, soft delete, and custom endpoints.
 
 ## License
 

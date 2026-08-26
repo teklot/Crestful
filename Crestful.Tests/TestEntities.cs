@@ -123,3 +123,16 @@ public sealed class ThrowingHook : IResourceHook<Device>
     public Task BeforeCreateAsync(CreateContext<Device> context)
         => throw new InvalidOperationException("boom");
 }
+
+public sealed class SoftDeleteDevice : IResource, ISoftDeletable
+{
+    public int Id { get; set; }
+
+    [Required]
+    [StringLength(100)]
+    public string? Name { get; set; }
+
+    public string? Model { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+}

@@ -10,7 +10,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>Crestful;EFCore;EntityFrameworkCore;Persistence;REST;API;dotnet-library</PackageTags>
-    <PackageReleaseNotes>EF Core query translation for filtering, sorting, pagination, search, and field selection — translates ResourceQueryContext to LINQ expressions.</PackageReleaseNotes>
+    <PackageReleaseNotes>Soft delete support — DELETE sets DeletedAt instead of removing; automatic query filtering for soft-deleted items.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/teklot/Crestful</PackageProjectUrl>
     <RepositoryUrl>https://github.com/teklot/Crestful.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

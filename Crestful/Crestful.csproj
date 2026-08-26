@@ -10,7 +10,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>Crestful;REST;AspNetCore;MinimalAPI;API;Framework;dotnet-library</PackageTags>
-    <PackageReleaseNotes>Query engine — filtering (?where=), sorting (?sort=), pagination (?page=&amp;max_results=), full-text search (?search=), field selection (?field=), per-resource query configuration via ResourceQueryOptions.</PackageReleaseNotes>
+    <PackageReleaseNotes>Soft delete via ISoftDeletable marker interface — automatic query filtering, restore on PUT/PATCH, configurable DeletedAt field name.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/teklot/Crestful</PackageProjectUrl>
     <RepositoryUrl>https://github.com/teklot/Crestful.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

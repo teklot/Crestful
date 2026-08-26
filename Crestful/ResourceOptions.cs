@@ -29,6 +29,9 @@ public class ResourceOptions
 
     /// <summary>Query engine configuration for the list endpoint.</summary>
     public ResourceQueryOptions Query { get; set; } = new();
+
+    /// <summary>Soft delete configuration for the resource.</summary>
+    public ResourceSoftDeleteOptions SoftDelete { get; set; } = new();
 }
 
 /// <summary>
@@ -62,6 +65,21 @@ public class ResourceQueryOptions
 
     /// <summary>Whether relationship embedding via <c>?embedded=</c> is enabled. Defaults to <c>true</c>.</summary>
     public bool EmbeddingEnabled { get; set; } = true;
+}
+
+/// <summary>
+/// Configuration for soft delete on a per-resource basis.
+/// </summary>
+public class ResourceSoftDeleteOptions
+{
+    /// <summary>Whether soft delete is enabled for this resource. Defaults to <c>false</c>.</summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>
+    /// The property name on the resource that stores the soft-delete timestamp.
+    /// Defaults to <c>"DeletedAt"</c>.
+    /// </summary>
+    public string DeletedAtFieldName { get; set; } = "DeletedAt";
 }
 
 /// <summary>

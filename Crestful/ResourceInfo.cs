@@ -52,6 +52,33 @@ public class ResourceInfo
     /// <summary>Writes the key onto a resource instance.</summary>
     public void SetKey(object instance, object? value) => KeyProperty.SetValue(instance, value);
 
+    /// <summary>Whether the resource implements <see cref="ISoftDeletable"/>.</summary>
+    public bool IsSoftDeletable => typeof(ISoftDeletable).IsAssignableFrom(ResourceType);
+
+    private PropertyInfo? _deletedAtProperty;
+
+    /// <summary>
+    /// The property that stores the soft-delete timestamp, resolved from the configured field name.
+    /// Returns <c>null</c> if the resource does not implement <see cref="ISoftDeletable"/>.
+    /// </summary>
+    public PropertyInfo? DeletedAtProperty => _deletedAtProperty ??= FindDeletedAtProperty(ResourceType, Options.SoftDelete.DeletedAtFieldName);
+
+    /// <summary>Whether soft delete is actively enabled for this resource.</summary>
+    public bool SoftDeleteEnabled => Options.SoftDelete.Enabled && IsSoftDeletable;
+
+    /// <summary>Reads the soft-delete timestamp from a resource instance.</summary>
+    public DateTimeOffset? GetDeletedAt(object instance)
+        => SoftDeleteEnabled ? (DateTimeOffset?)DeletedAtProperty!.GetValue(instance) : null;
+
+    /// <summary>Sets the soft-delete timestamp on a resource instance.</summary>
+    public void SetDeletedAt(object instance, DateTimeOffset? value)
+    {
+        if (SoftDeleteEnabled)
+        {
+            DeletedAtProperty!.SetValue(instance, value);
+        }
+    }
+
     /// <summary>Attempts to parse a raw route value into a key of the resource's key type.</summary>
     public bool TryConvertKey(string? raw, out object? key)
     {
@@ -154,6 +181,11 @@ public class ResourceInfo
         }
 
         return key;
+    }
+
+    private static PropertyInfo? FindDeletedAtProperty(Type resourceType, string fieldName)
+    {
+        return resourceType.GetProperty(fieldName, BindingFlags.Public | BindingFlags.Instance);
     }
 }
 

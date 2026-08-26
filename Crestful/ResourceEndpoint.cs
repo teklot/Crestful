@@ -25,6 +25,12 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
     {
         var dataSource = ResolveDataSource(http);
         var query = QueryParameterParser.Parse(http, _info.Options.Query);
+
+        if (_info.SoftDeleteEnabled)
+        {
+            query = InjectSoftDeleteFilter(query, _info);
+        }
+
         var items = await dataSource.ListAsync(query, http.RequestAborted);
 
         if (query.Fields is { Count: > 0 })
@@ -47,7 +53,17 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
 
         var dataSource = ResolveDataSource(http);
         var item = await dataSource.GetAsync(key!, http.RequestAborted);
-        return item is null ? ResourceErrors.NotFound(_info) : Results.Json(item, JsonOptions);
+        if (item is null)
+        {
+            return ResourceErrors.NotFound(_info);
+        }
+
+        if (_info.SoftDeleteEnabled && _info.GetDeletedAt(item).HasValue)
+        {
+            return ResourceErrors.NotFound(_info);
+        }
+
+        return Results.Json(item, JsonOptions);
     }
 
     public async Task<IResult> CreateAsync(HttpContext http)
@@ -127,6 +143,11 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         await InvokeUpdateHooksAsync(http, context, before: true);
         await InvokeSaveHooksAsync(http, before: true);
 
+        if (_info.SoftDeleteEnabled)
+        {
+            _info.SetDeletedAt(original, null);
+        }
+
         var updated = await dataSource.UpdateAsync(resource, original, http.RequestAborted);
         if (updated is null)
         {
@@ -178,6 +199,11 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         await InvokeUpdateHooksAsync(http, context, before: true);
         await InvokeSaveHooksAsync(http, before: true);
 
+        if (_info.SoftDeleteEnabled)
+        {
+            _info.SetDeletedAt(original, null);
+        }
+
         var updated = await dataSource.UpdateAsync(original, original, http.RequestAborted);
         if (updated is null)
         {
@@ -209,10 +235,22 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         await InvokeDeleteHooksAsync(http, context, before: true);
         await InvokeSaveHooksAsync(http, before: true);
 
-        var removed = await dataSource.DeleteAsync(key!, http.RequestAborted);
-        if (!removed)
+        if (_info.SoftDeleteEnabled)
         {
-            return ResourceErrors.NotFound(_info);
+            _info.SetDeletedAt(existing, DateTimeOffset.UtcNow);
+            var updated = await dataSource.UpdateAsync(existing, existing, http.RequestAborted);
+            if (updated is null)
+            {
+                return ResourceErrors.NotFound(_info);
+            }
+        }
+        else
+        {
+            var removed = await dataSource.DeleteAsync(key!, http.RequestAborted);
+            if (!removed)
+            {
+                return ResourceErrors.NotFound(_info);
+            }
         }
 
         await InvokeSaveHooksAsync(http, before: false);
@@ -223,6 +261,39 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
 
     private bool TryGetKey(HttpContext http, out object? key)
         => _info.TryConvertKey(http.Request.RouteValues["id"]?.ToString(), out key);
+
+    private static ResourceQueryContext InjectSoftDeleteFilter(ResourceQueryContext query, ResourceInfo<TResource> info)
+    {
+        var deletedAtField = info.Options.SoftDelete.DeletedAtFieldName;
+        var alreadyFiltered = query.Filters.Any(f =>
+            string.Equals(f.PropertyName, deletedAtField, StringComparison.OrdinalIgnoreCase));
+
+        if (alreadyFiltered)
+        {
+            return query;
+        }
+
+        var filters = new List<QueryFilter>(query.Filters)
+        {
+            new QueryFilter
+            {
+                PropertyName = deletedAtField,
+                Operator = QueryFilterOperator.Equals,
+                Value = null!
+            }
+        };
+
+        return new ResourceQueryContext
+        {
+            Filters = filters,
+            Sort = query.Sort,
+            Search = query.Search,
+            Page = query.Page,
+            MaxResults = query.MaxResults,
+            Fields = query.Fields,
+            Embedded = query.Embedded
+        };
+    }
 
     private IResourceDataSource<TResource> ResolveDataSource(HttpContext http)
     {

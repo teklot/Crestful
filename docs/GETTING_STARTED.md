@@ -13,6 +13,7 @@ This guide walks through the core concepts of Crestful: defining resources, enab
 - [Custom endpoints](#custom-endpoints)
 - [Error handling](#error-handling)
 - [Query engine](#query-engine)
+- [Soft delete](#soft-delete)
 - [Configuration reference](#configuration-reference)
 
 ## Prerequisites
@@ -383,6 +384,63 @@ app.MapResource<Device>(o =>
 });
 ```
 
+## Soft delete
+
+Resources that implement `ISoftDeletable` can opt into soft delete. The endpoints stay the same, but the behavior changes:
+
+| Operation | Without soft delete | With soft delete |
+| --- | --- | --- |
+| `DELETE` | Removes the record | Stamps `DeletedAt`, record stays |
+| `GET /{id}` | Returns the record | Returns 404 if soft-deleted |
+| `GET /` | Returns all records | Excludes soft-deleted items |
+| `PUT` | Updates the record | Restores soft-deleted item (clears `DeletedAt`) or updates active item |
+| `PATCH` | Updates the record | Restores soft-deleted item (clears `DeletedAt`) or updates active item |
+
+### Define a soft-deletable resource
+
+```csharp
+using Crestful;
+
+public sealed class Device : IResource, ISoftDeletable
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public DateTimeOffset? DeletedAt { get; set; }
+}
+```
+
+### Enable soft delete per resource
+
+```csharp
+app.MapResource<Device>(o =>
+{
+    o.SoftDelete.Enabled = true;
+    o.SoftDelete.DeletedAtFieldName = "DeletedAt"; // default
+});
+```
+
+### Behavior
+
+| Operation | What happens |
+| --- | --- |
+| `DELETE` | Sets `DeletedAt` to the current timestamp, record stays in the database |
+| `GET /{id}` | Returns 404 if the item is soft-deleted |
+| `GET /` | Automatically excludes soft-deleted items from results |
+| `PUT` | If the item is soft-deleted, restores it (clears `DeletedAt`). Otherwise updates normally |
+| `PATCH` | If the item is soft-deleted, restores it (clears `DeletedAt`). Otherwise updates normally |
+
+### Custom field name
+
+If your entity uses a different property name for the soft-delete timestamp:
+
+```csharp
+app.MapResource<Device>(o =>
+{
+    o.SoftDelete.Enabled = true;
+    o.SoftDelete.DeletedAtFieldName = "RemovedAt";
+});
+```
+
 ## Configuration reference
 
 ### `CrestfulOptions` (passed to `AddResources`)
@@ -405,6 +463,7 @@ app.MapResource<Device>(o =>
 | `UpdateEnabled` | `true` | Generate `PUT` and `PATCH` |
 | `DeleteEnabled` | `true` | Generate `DELETE` |
 | `Query` | default | Query engine configuration (see [Query engine](#query-engine)) |
+| `SoftDelete` | default | Soft delete configuration (see [Soft delete](#soft-delete)) |
 
 For example, disable delete and rename the route globally:
 

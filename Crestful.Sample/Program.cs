@@ -42,13 +42,14 @@ app.MapGet("/", () =>
                 new TextNode(".patch { background: #fce4ec; color: #c62828; }"),
                 new TextNode(".delete { background: #ffebee; color: #b71c1c; }"),
                 new TextNode(".path { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.9rem; }"),
-                new TextNode(".desc { color: #666; margin-left: auto; font-size: 0.85rem; }")
+                new TextNode(".desc { color: #666; margin-left: auto; font-size: 0.85rem; }"),
+                new TextNode(".note { background: #fffde7; border-left: 3px solid #fdd835; padding: 0.75rem 1rem; border-radius: 4px; font-size: 0.9rem; margin-bottom: 1.5rem; }")
             )
         ),
         new BodyElement(
             new DivElement(
                 new Heading1Element("Crestful Sample API"),
-                new ParagraphElement("A demo of the Crestful convention-first REST framework. Two resources are seeded with data.").Class("subtitle"),
+                new ParagraphElement("A demo of the Crestful convention-first REST framework. Device resource is seeded with data and has soft delete enabled.").Class("subtitle"),
 
                 EndpointSection("Resources", new[]
                 {
@@ -69,7 +70,9 @@ app.MapGet("/", () =>
                     ("GET", "/api/devices?page=1&max_results=1",           "Pagination"),
                     ("GET", "/api/devices?search=smoke",                   "Full-text search"),
                     ("GET", "/api/devices?field=Name,Model",               "Field selection"),
-                })
+                }),
+
+                NoteSection("Soft Delete is enabled on Device. DELETE stamps DeletedAt instead of removing. GET/list hides soft-deleted items. PUT/PATCH on a soft-deleted item restores it.")
             ).Class("container")
         )
     );
@@ -77,7 +80,8 @@ app.MapGet("/", () =>
     return page.ToHtmlResult();
 });
 
-app.MapResources();
+app.MapResource<Device>(o => o.SoftDelete.Enabled = true);
+app.MapResource<Reading>();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -115,4 +119,11 @@ static DivElement EndpointRow(string method, string path, string desc)
         new SpanElement(path).Class("path"),
         new SpanElement(desc).Class("desc")
     ).Class("endpoint");
+}
+
+static DivElement NoteSection(string text)
+{
+    return new DivElement(
+        new ParagraphElement(text)
+    ).Class("note");
 }

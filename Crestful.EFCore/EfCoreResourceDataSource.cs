@@ -77,6 +77,13 @@ public sealed class EfCoreResourceDataSource<TResource, TDbContext> : IResourceD
             return false;
         }
 
+        if (_info.SoftDeleteEnabled)
+        {
+            _info.SetDeletedAt(existing, DateTimeOffset.UtcNow);
+            await _db.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+
         _db.Remove(existing);
         await _db.SaveChangesAsync(cancellationToken);
         return true;
