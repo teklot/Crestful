@@ -32,6 +32,9 @@ public class ResourceOptions
 
     /// <summary>Soft delete configuration for the resource.</summary>
     public ResourceSoftDeleteOptions SoftDelete { get; set; } = new();
+
+    /// <summary>Auditing configuration for the resource.</summary>
+    public ResourceAuditingOptions Auditing { get; set; } = new();
 }
 
 /// <summary>
@@ -80,6 +83,39 @@ public class ResourceSoftDeleteOptions
     /// Defaults to <c>"DeletedAt"</c>.
     /// </summary>
     public string DeletedAtFieldName { get; set; } = "DeletedAt";
+}
+
+/// <summary>
+/// Configuration for auditing on a per-resource basis.
+/// </summary>
+public class ResourceAuditingOptions
+{
+    /// <summary>Whether auditing is enabled for this resource. Defaults to <c>false</c>.</summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>
+    /// The property name that stores the creation timestamp.
+    /// Defaults to <c>"CreatedAt"</c>.
+    /// </summary>
+    public string CreatedAtFieldName { get; set; } = "CreatedAt";
+
+    /// <summary>
+    /// The property name that stores the last update timestamp.
+    /// Defaults to <c>"UpdatedAt"</c>.
+    /// </summary>
+    public string UpdatedAtFieldName { get; set; } = "UpdatedAt";
+
+    /// <summary>
+    /// The property name that stores the creator's identity.
+    /// Defaults to <c>"CreatedBy"</c>.
+    /// </summary>
+    public string CreatedByFieldName { get; set; } = "CreatedBy";
+
+    /// <summary>
+    /// The property name that stores the last updater's identity.
+    /// Defaults to <c>"UpdatedBy"</c>.
+    /// </summary>
+    public string UpdatedByFieldName { get; set; } = "UpdatedBy";
 }
 
 /// <summary>

@@ -12,49 +12,49 @@ public class CrudIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { name = "Thermostat", model = "T100", quantity = 3 });
+            var create = await client.PostAsJsonAsync("/api/devices", new { name = "Thermostat", model = "T100", quantity = 3 }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, create.StatusCode);
             Assert.Equal("application/json", create.Content.Headers.ContentType?.MediaType);
 
-            var created = await create.Content.ReadFromJsonAsync<Device>();
+            var created = await create.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
             Assert.NotNull(created);
             Assert.Equal("Thermostat", created!.Name);
             Assert.True(created.Id > 0);
             Assert.Equal(3, created.Quantity);
 
-            var list = await client.GetAsync("/api/devices");
+            var list = await client.GetAsync("/api/devices", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, list.StatusCode);
-            var devices = await list.Content.ReadFromJsonAsync<List<Device>>();
+            var devices = await list.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.Contains(devices!, d => d.Id == created.Id);
 
-            var detail = await client.GetAsync($"/api/devices/{created.Id}");
+            var detail = await client.GetAsync($"/api/devices/{created.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, detail.StatusCode);
-            var fetched = await detail.Content.ReadFromJsonAsync<Device>();
+            var fetched = await detail.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
             Assert.Equal("Thermostat", fetched!.Name);
 
-            var put = await client.PutAsJsonAsync($"/api/devices/{created.Id}", new { id = created.Id, name = "Updated", model = "T200", quantity = 5 });
+            var put = await client.PutAsJsonAsync($"/api/devices/{created.Id}", new { id = created.Id, name = "Updated", model = "T200", quantity = 5 }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, put.StatusCode);
-            var updated = await put.Content.ReadFromJsonAsync<Device>();
+            var updated = await put.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
             Assert.Equal("Updated", updated!.Name);
             Assert.Equal("T200", updated.Model);
             Assert.Equal(5, updated.Quantity);
 
-            var patch = await client.PatchAsJsonAsync($"/api/devices/{created.Id}", new { model = "T300", isActive = false });
+            var patch = await client.PatchAsJsonAsync($"/api/devices/{created.Id}", new { model = "T300", isActive = false }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, patch.StatusCode);
-            var patched = await patch.Content.ReadFromJsonAsync<Device>();
+            var patched = await patch.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
             Assert.Equal("T300", patched!.Model);
             Assert.False(patched.IsActive);
             Assert.Equal("Updated", patched.Name);
 
-            var delete = await client.DeleteAsync($"/api/devices/{created.Id}");
+            var delete = await client.DeleteAsync($"/api/devices/{created.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
 
-            var after = await client.GetAsync($"/api/devices/{created.Id}");
+            var after = await client.GetAsync($"/api/devices/{created.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.NotFound, after.StatusCode);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -64,20 +64,20 @@ public class CrudIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var create = await client.PostAsJsonAsync("/api/guidresources", new { label = "Alpha" });
+            var create = await client.PostAsJsonAsync("/api/guidresources", new { label = "Alpha" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, create.StatusCode);
-            var created = await create.Content.ReadFromJsonAsync<GuidResource>();
+            var created = await create.Content.ReadFromJsonAsync<GuidResource>(TestContext.Current.CancellationToken);
             Assert.NotNull(created);
             Assert.NotEqual(Guid.Empty, created!.Id);
 
-            var detail = await client.GetAsync($"/api/guidresources/{created.Id}");
+            var detail = await client.GetAsync($"/api/guidresources/{created.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, detail.StatusCode);
-            var fetched = await detail.Content.ReadFromJsonAsync<GuidResource>();
+            var fetched = await detail.Content.ReadFromJsonAsync<GuidResource>(TestContext.Current.CancellationToken);
             Assert.Equal("Alpha", fetched!.Label);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -87,15 +87,15 @@ public class CrudIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var create = await client.PostAsJsonAsync("/api/guidresources", new { label = "Alpha" });
-            var created = await create.Content.ReadFromJsonAsync<GuidResource>();
+            var create = await client.PostAsJsonAsync("/api/guidresources", new { label = "Alpha" }, TestContext.Current.CancellationToken);
+            var created = await create.Content.ReadFromJsonAsync<GuidResource>(TestContext.Current.CancellationToken);
 
             Assert.NotNull(create.Headers.Location);
             Assert.Equal($"/api/guidresources/{created!.Id}", create.Headers.Location!.OriginalString);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -106,18 +106,18 @@ public class CrudIntegrationTests
             map: a => a.MapResource<Device>(o => o.Name = "machines"));
         try
         {
-            var create = await client.PostAsJsonAsync("/api/machines", new { name = "Robot" });
+            var create = await client.PostAsJsonAsync("/api/machines", new { name = "Robot" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, create.StatusCode);
 
-            var list = await client.GetAsync("/api/machines");
+            var list = await client.GetAsync("/api/machines", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, list.StatusCode);
 
-            var oldRoute = await client.GetAsync("/api/devices");
+            var oldRoute = await client.GetAsync("/api/devices", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.NotFound, oldRoute.StatusCode);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -139,16 +139,16 @@ public class CrudIntegrationTests
             map: a => a.MapResource<Device>(o => o.DeleteEnabled = false));
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" });
+            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, create.StatusCode);
-            var created = await create.Content.ReadFromJsonAsync<Device>();
+            var created = await create.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
 
-            var del = await client.DeleteAsync($"/api/devices/{created!.Id}");
+            var del = await client.DeleteAsync($"/api/devices/{created!.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.MethodNotAllowed, del.StatusCode);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 }

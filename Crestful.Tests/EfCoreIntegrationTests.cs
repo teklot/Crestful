@@ -31,34 +31,34 @@ public class EfCoreIntegrationTests
         });
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { name = "EF Device", model = "M1", quantity = 7 });
+            var create = await client.PostAsJsonAsync("/api/devices", new { name = "EF Device", model = "M1", quantity = 7 }, TestContext.Current.CancellationToken);
             Assert.Equal(System.Net.HttpStatusCode.Created, create.StatusCode);
-            var created = await create.Content.ReadFromJsonAsync<Device>();
+            var created = await create.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
             Assert.True(created!.Id > 0);
             Assert.Equal("EF Device", created.Name);
 
-            var list = await client.GetAsync("/api/devices");
-            var devices = await list.Content.ReadFromJsonAsync<List<Device>>();
+            var list = await client.GetAsync("/api/devices", TestContext.Current.CancellationToken);
+            var devices = await list.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.Single(devices!);
 
-            var put = await client.PutAsJsonAsync($"/api/devices/{created.Id}", new { id = created.Id, name = "Renamed", model = "M2", quantity = 8 });
+            var put = await client.PutAsJsonAsync($"/api/devices/{created.Id}", new { id = created.Id, name = "Renamed", model = "M2", quantity = 8 }, TestContext.Current.CancellationToken);
             Assert.Equal(System.Net.HttpStatusCode.OK, put.StatusCode);
-            var updated = await put.Content.ReadFromJsonAsync<Device>();
+            var updated = await put.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
             Assert.Equal("Renamed", updated!.Name);
 
-            var patch = await client.PatchAsJsonAsync($"/api/devices/{created.Id}", new { quantity = 9 });
-            var patched = await patch.Content.ReadFromJsonAsync<Device>();
+            var patch = await client.PatchAsJsonAsync($"/api/devices/{created.Id}", new { quantity = 9 }, TestContext.Current.CancellationToken);
+            var patched = await patch.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
             Assert.Equal(9, patched!.Quantity);
 
-            var delete = await client.DeleteAsync($"/api/devices/{created.Id}");
+            var delete = await client.DeleteAsync($"/api/devices/{created.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(System.Net.HttpStatusCode.NoContent, delete.StatusCode);
 
-            var after = await client.GetAsync($"/api/devices/{created.Id}");
+            var after = await client.GetAsync($"/api/devices/{created.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(System.Net.HttpStatusCode.NotFound, after.StatusCode);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -73,23 +73,23 @@ public class EfCoreIntegrationTests
         });
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { name = "Persistence check" });
+            var create = await client.PostAsJsonAsync("/api/devices", new { name = "Persistence check" }, TestContext.Current.CancellationToken);
             Assert.Equal(System.Net.HttpStatusCode.Created, create.StatusCode);
-            var created = await create.Content.ReadFromJsonAsync<Device>();
+            var created = await create.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
 
-            await app.StopAsync();
-            await Task.Delay(50);
+            await app.StopAsync(TestContext.Current.CancellationToken);
+            await Task.Delay(50, TestContext.Current.CancellationToken);
 
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<DeviceDbContext>();
-                var stored = await db.Devices.SingleOrDefaultAsync(d => d.Id == created!.Id);
+                var stored = await db.Devices.SingleOrDefaultAsync(d => d.Id == created!.Id, TestContext.Current.CancellationToken);
                 Assert.NotNull(stored);
             }
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -104,33 +104,33 @@ public class EfCoreIntegrationTests
         });
         try
         {
-            var device = await client.PostAsJsonAsync("/api/devices", new { name = "Sensor hub" });
+            var device = await client.PostAsJsonAsync("/api/devices", new { name = "Sensor hub" }, TestContext.Current.CancellationToken);
             Assert.Equal(System.Net.HttpStatusCode.Created, device.StatusCode);
-            var createdDevice = await device.Content.ReadFromJsonAsync<Device>();
+            var createdDevice = await device.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
 
             var readingId = Guid.NewGuid();
             var reading = await client.PostAsJsonAsync("/api/readings",
-                new { id = readingId, deviceId = createdDevice!.Id, value = 42.5 });
+                new { id = readingId, deviceId = createdDevice!.Id, value = 42.5 }, TestContext.Current.CancellationToken);
             Assert.Equal(System.Net.HttpStatusCode.Created, reading.StatusCode);
-            var createdReading = await reading.Content.ReadFromJsonAsync<Reading>();
+            var createdReading = await reading.Content.ReadFromJsonAsync<Reading>(TestContext.Current.CancellationToken);
             Assert.Equal(createdDevice.Id, createdReading!.DeviceId);
             Assert.Equal(42.5, createdReading.Value);
 
-            var get = await client.GetAsync($"/api/readings/{readingId}");
-            var fetched = await get.Content.ReadFromJsonAsync<Reading>();
+            var get = await client.GetAsync($"/api/readings/{readingId}", TestContext.Current.CancellationToken);
+            var fetched = await get.Content.ReadFromJsonAsync<Reading>(TestContext.Current.CancellationToken);
             Assert.Equal(createdDevice.Id, fetched!.DeviceId);
 
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<DeviceDbContext>();
-                var stored = await db.Readings.SingleOrDefaultAsync(r => r.Id == readingId);
+                var stored = await db.Readings.SingleOrDefaultAsync(r => r.Id == readingId, TestContext.Current.CancellationToken);
                 Assert.NotNull(stored);
                 Assert.Equal(createdDevice.Id, stored!.DeviceId);
             }
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -153,9 +153,9 @@ public class EfCoreIntegrationTests
                     new { value = 1.5 },
                     new { value = 2.5 }
                 }
-            });
+            }, TestContext.Current.CancellationToken);
             Assert.Equal(System.Net.HttpStatusCode.Created, create.StatusCode);
-            var created = await create.Content.ReadFromJsonAsync<Device>();
+            var created = await create.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
 
             Assert.Equal(2, created!.Readings.Count);
             Assert.All(created.Readings, r => Assert.Equal(created.Id, r.DeviceId));
@@ -164,13 +164,13 @@ public class EfCoreIntegrationTests
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<DeviceDbContext>();
-                var readings = await db.Readings.Where(r => r.DeviceId == created.Id).ToListAsync();
+                var readings = await db.Readings.Where(r => r.DeviceId == created.Id).ToListAsync(TestContext.Current.CancellationToken);
                 Assert.Equal(2, readings.Count);
             }
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 }

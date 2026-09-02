@@ -12,17 +12,17 @@ public class ValidationIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { model = "T100" });
+            var create = await client.PostAsJsonAsync("/api/devices", new { model = "T100" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
             Assert.Equal("application/problem+json", create.Content.Headers.ContentType?.MediaType);
 
-            var problem = await create.Content.ReadFromJsonAsync<ValidationProblemJson>();
+            var problem = await create.Content.ReadFromJsonAsync<ValidationProblemJson>(TestContext.Current.CancellationToken);
             Assert.NotNull(problem);
             Assert.Contains(problem!.Errors, e => e.Key == "Name");
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -32,16 +32,16 @@ public class ValidationIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var create = await client.PostAsJsonAsync("/api/orders", new { reference = "TOO-LONG" });
+            var create = await client.PostAsJsonAsync("/api/orders", new { reference = "TOO-LONG" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
 
-            var problem = await create.Content.ReadFromJsonAsync<ValidationProblemJson>();
+            var problem = await create.Content.ReadFromJsonAsync<ValidationProblemJson>(TestContext.Current.CancellationToken);
             Assert.NotNull(problem);
             Assert.Contains(problem!.Errors, e => e.Key == "Reference");
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -51,12 +51,12 @@ public class ValidationIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var create = await client.PostAsJsonAsync("/api/orders", new { reference = "AB" });
+            var create = await client.PostAsJsonAsync("/api/orders", new { reference = "AB" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -66,15 +66,15 @@ public class ValidationIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var create = await client.PostAsJsonAsync("/api/orders", new { reference = "AB" });
-            var created = await create.Content.ReadFromJsonAsync<Order>();
+            var create = await client.PostAsJsonAsync("/api/orders", new { reference = "AB" }, TestContext.Current.CancellationToken);
+            var created = await create.Content.ReadFromJsonAsync<Order>(TestContext.Current.CancellationToken);
 
-            var patch = await client.PatchAsJsonAsync($"/api/orders/{created!.Id}", new { reference = "WAY-TOO-LONG" });
+            var patch = await client.PatchAsJsonAsync($"/api/orders/{created!.Id}", new { reference = "WAY-TOO-LONG" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, patch.StatusCode);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 

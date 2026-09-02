@@ -136,3 +136,20 @@ public sealed class SoftDeleteDevice : IResource, ISoftDeletable
 
     public DateTimeOffset? DeletedAt { get; set; }
 }
+
+public sealed class AuditedDevice : IResource, IAuditable
+{
+    public int Id { get; set; }
+
+    [Required]
+    [StringLength(100)]
+    public string? Name { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public string? CreatedBy { get; set; }
+
+    public string? UpdatedBy { get; set; }
+}

@@ -10,7 +10,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>Crestful;REST;AspNetCore;MinimalAPI;API;Framework;dotnet-library</PackageTags>
-    <PackageReleaseNotes>Soft delete via ISoftDeletable marker interface — automatic query filtering, restore on PUT/PATCH, configurable DeletedAt field name.</PackageReleaseNotes>
+    <PackageReleaseNotes>Automatic auditing via IAuditable marker interface — CreatedAt/UpdatedAt/CreatedBy/UpdatedBy populated on create and update, configurable field names.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/teklot/Crestful</PackageProjectUrl>
     <RepositoryUrl>https://github.com/teklot/Crestful.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

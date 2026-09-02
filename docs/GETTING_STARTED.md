@@ -14,6 +14,7 @@ This guide walks through the core concepts of Crestful: defining resources, enab
 - [Error handling](#error-handling)
 - [Query engine](#query-engine)
 - [Soft delete](#soft-delete)
+- [Auditing](#auditing)
 - [Configuration reference](#configuration-reference)
 
 ## Prerequisites
@@ -441,6 +442,57 @@ app.MapResource<Device>(o =>
 });
 ```
 
+## Auditing
+
+Resources that implement `IAuditable` can opt into automatic auditing. The framework populates `CreatedAt`, `UpdatedAt`, `CreatedBy`, and `UpdatedBy` on create and update, so you don't have to set them yourself.
+
+### Define an auditable resource
+
+```csharp
+using Crestful;
+
+public sealed class Device : IResource, IAuditable
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public string? UpdatedBy { get; set; }
+}
+```
+
+### Enable auditing per resource
+
+```csharp
+app.MapResource<Device>(o => o.Auditing.Enabled = true);
+```
+
+### Behavior
+
+| Operation | What happens |
+| --- | --- |
+| `POST` | Sets `CreatedAt` and `UpdatedAt` to now; sets `CreatedBy` and `UpdatedBy` from `HttpContext.User.Identity?.Name` (null if anonymous) |
+| `PUT` | Updates `UpdatedAt` and `UpdatedBy`; preserves the original `CreatedAt` and `CreatedBy` |
+| `PATCH` | Updates `UpdatedAt` and `UpdatedBy`; preserves the original `CreatedAt` and `CreatedBy` |
+
+`CreatedAt` and `CreatedBy` are always preserved across updates — a client cannot overwrite them.
+
+### Custom field names
+
+If your entity uses different property names:
+
+```csharp
+app.MapResource<Device>(o =>
+{
+    o.Auditing.Enabled = true;
+    o.Auditing.CreatedAtFieldName = "InsertedAt";
+    o.Auditing.UpdatedAtFieldName = "ModifiedAt";
+    o.Auditing.CreatedByFieldName = "InsertedBy";
+    o.Auditing.UpdatedByFieldName = "ModifiedBy";
+});
+```
+
 ## Configuration reference
 
 ### `CrestfulOptions` (passed to `AddResources`)
@@ -464,6 +516,7 @@ app.MapResource<Device>(o =>
 | `DeleteEnabled` | `true` | Generate `DELETE` |
 | `Query` | default | Query engine configuration (see [Query engine](#query-engine)) |
 | `SoftDelete` | default | Soft delete configuration (see [Soft delete](#soft-delete)) |
+| `Auditing` | default | Auditing configuration (see [Auditing](#auditing)) |
 
 For example, disable delete and rename the route globally:
 

@@ -66,6 +66,88 @@ public class ResourceInfo
     /// <summary>Whether soft delete is actively enabled for this resource.</summary>
     public bool SoftDeleteEnabled => Options.SoftDelete.Enabled && IsSoftDeletable;
 
+    /// <summary>Whether the resource implements <see cref="IAuditable"/>.</summary>
+    public bool IsAuditable => typeof(IAuditable).IsAssignableFrom(ResourceType);
+
+    /// <summary>Whether auditing is actively enabled for this resource.</summary>
+    public bool AuditingEnabled => Options.Auditing.Enabled && IsAuditable;
+
+    private PropertyInfo? _createdAtProperty;
+
+    /// <summary>
+    /// The property that stores the creation timestamp, resolved from the configured field name.
+    /// Returns <c>null</c> if the resource does not implement <see cref="IAuditable"/>.
+    /// </summary>
+    public PropertyInfo? CreatedAtProperty => _createdAtProperty ??= FindAuditProperty(ResourceType, Options.Auditing.CreatedAtFieldName);
+
+    private PropertyInfo? _updatedAtProperty;
+
+    /// <summary>
+    /// The property that stores the last update timestamp, resolved from the configured field name.
+    /// Returns <c>null</c> if the resource does not implement <see cref="IAuditable"/>.
+    /// </summary>
+    public PropertyInfo? UpdatedAtProperty => _updatedAtProperty ??= FindAuditProperty(ResourceType, Options.Auditing.UpdatedAtFieldName);
+
+    private PropertyInfo? _createdByProperty;
+
+    /// <summary>
+    /// The property that stores the creator's identity, resolved from the configured field name.
+    /// Returns <c>null</c> if the resource does not implement <see cref="IAuditable"/>.
+    /// </summary>
+    public PropertyInfo? CreatedByProperty => _createdByProperty ??= FindAuditProperty(ResourceType, Options.Auditing.CreatedByFieldName);
+
+    private PropertyInfo? _updatedByProperty;
+
+    /// <summary>
+    /// The property that stores the last updater's identity, resolved from the configured field name.
+    /// Returns <c>null</c> if the resource does not implement <see cref="IAuditable"/>.
+    /// </summary>
+    public PropertyInfo? UpdatedByProperty => _updatedByProperty ??= FindAuditProperty(ResourceType, Options.Auditing.UpdatedByFieldName);
+
+    /// <summary>Sets the creation timestamp on a resource instance.</summary>
+    public void SetCreatedAt(object instance, DateTimeOffset value)
+    {
+        if (AuditingEnabled)
+        {
+            CreatedAtProperty!.SetValue(instance, value);
+        }
+    }
+
+    /// <summary>Reads the creation timestamp from a resource instance.</summary>
+    public DateTimeOffset? GetCreatedAt(object instance)
+        => AuditingEnabled ? (DateTimeOffset?)CreatedAtProperty!.GetValue(instance) : null;
+
+    /// <summary>Sets the last update timestamp on a resource instance.</summary>
+    public void SetUpdatedAt(object instance, DateTimeOffset value)
+    {
+        if (AuditingEnabled)
+        {
+            UpdatedAtProperty!.SetValue(instance, value);
+        }
+    }
+
+    /// <summary>Sets the creator's identity on a resource instance.</summary>
+    public void SetCreatedBy(object instance, string? value)
+    {
+        if (AuditingEnabled)
+        {
+            CreatedByProperty!.SetValue(instance, value);
+        }
+    }
+
+    /// <summary>Reads the creator's identity from a resource instance.</summary>
+    public string? GetCreatedBy(object instance)
+        => AuditingEnabled ? (string?)CreatedByProperty!.GetValue(instance) : null;
+
+    /// <summary>Sets the last updater's identity on a resource instance.</summary>
+    public void SetUpdatedBy(object instance, string? value)
+    {
+        if (AuditingEnabled)
+        {
+            UpdatedByProperty!.SetValue(instance, value);
+        }
+    }
+
     /// <summary>Reads the soft-delete timestamp from a resource instance.</summary>
     public DateTimeOffset? GetDeletedAt(object instance)
         => SoftDeleteEnabled ? (DateTimeOffset?)DeletedAtProperty!.GetValue(instance) : null;
@@ -184,6 +266,11 @@ public class ResourceInfo
     }
 
     private static PropertyInfo? FindDeletedAtProperty(Type resourceType, string fieldName)
+    {
+        return resourceType.GetProperty(fieldName, BindingFlags.Public | BindingFlags.Instance);
+    }
+
+    private static PropertyInfo? FindAuditProperty(Type resourceType, string fieldName)
     {
         return resourceType.GetProperty(fieldName, BindingFlags.Public | BindingFlags.Instance);
     }

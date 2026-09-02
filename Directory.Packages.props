@@ -3,16 +3,16 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="FluentHtml.Core" Version="0.4.0" />
-    <PackageVersion Include="FluentHtml.Http" Version="0.4.0" />
-    <PackageVersion Include="FluentHtml.Bootstrap" Version="0.4.0" />
-    <PackageVersion Include="FluentValidation" Version="11.11.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+    <PackageVersion Include="FluentHtml.Core" Version="0.5.0" />
+    <PackageVersion Include="FluentHtml.Http" Version="0.5.0" />
+    <PackageVersion Include="FluentHtml.Bootstrap" Version="0.5.0" />
+    <PackageVersion Include="FluentValidation" Version="12.1.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.30" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.30" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
-    <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="8.0.11" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageVersion Include="xunit.v3" Version="4.0.0" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="8.0.30" Condition="'$(TargetFramework)' == 'net8.0'" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'" />
   </ItemGroup>
 </Project>

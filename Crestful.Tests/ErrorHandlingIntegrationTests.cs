@@ -13,17 +13,17 @@ public class ErrorHandlingIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var response = await client.GetAsync("/api/devices/424242");
+            var response = await client.GetAsync("/api/devices/424242", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
             Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
 
-            var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+            var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestContext.Current.CancellationToken);
             Assert.NotNull(problem);
             Assert.Equal(404, problem!.Status);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -33,17 +33,17 @@ public class ErrorHandlingIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var response = await client.GetAsync("/api/devices/not-an-int");
+            var response = await client.GetAsync("/api/devices/not-an-int", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-            var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+            var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestContext.Current.CancellationToken);
             Assert.NotNull(problem);
             Assert.Equal(400, problem!.Status);
             Assert.Contains("key", problem.Detail, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -54,15 +54,15 @@ public class ErrorHandlingIntegrationTests
         try
         {
             using var content = new StringContent("{ this is not json", System.Text.Encoding.UTF8, "application/json");
-            var response = await client.PostAsync("/api/devices", content);
+            var response = await client.PostAsync("/api/devices", content, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-            var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+            var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestContext.Current.CancellationToken);
             Assert.Equal(400, problem!.Status);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -72,18 +72,18 @@ public class ErrorHandlingIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var first = await client.PostAsJsonAsync("/api/devices", new { id = 1, name = "One" });
+            var first = await client.PostAsJsonAsync("/api/devices", new { id = 1, name = "One" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, first.StatusCode);
 
-            var second = await client.PostAsJsonAsync("/api/devices", new { id = 1, name = "Two" });
+            var second = await client.PostAsJsonAsync("/api/devices", new { id = 1, name = "Two" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
 
-            var problem = await second.Content.ReadFromJsonAsync<ProblemDetails>();
+            var problem = await second.Content.ReadFromJsonAsync<ProblemDetails>(TestContext.Current.CancellationToken);
             Assert.Equal(409, problem!.Status);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -93,18 +93,18 @@ public class ErrorHandlingIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            var put = await client.PutAsJsonAsync("/api/devices/999", new { id = 999, name = "X" });
+            var put = await client.PutAsJsonAsync("/api/devices/999", new { id = 999, name = "X" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.NotFound, put.StatusCode);
 
-            var patch = await client.PatchAsJsonAsync("/api/devices/999", new { name = "X" });
+            var patch = await client.PatchAsJsonAsync("/api/devices/999", new { name = "X" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.NotFound, patch.StatusCode);
 
-            var delete = await client.DeleteAsync("/api/devices/999");
+            var delete = await client.DeleteAsync("/api/devices/999", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.NotFound, delete.StatusCode);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 }

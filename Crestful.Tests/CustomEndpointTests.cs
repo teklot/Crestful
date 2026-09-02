@@ -14,16 +14,16 @@ public class CustomEndpointTests
             map: a => a.MapResource<Device>().MapGet("/count", () => Results.Ok(7)));
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" });
+            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, create.StatusCode);
 
-            var response = await client.GetAsync("/api/devices/count");
+            var response = await client.GetAsync("/api/devices/count", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Equal("7", await response.Content.ReadAsStringAsync());
+            Assert.Equal("7", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -34,13 +34,13 @@ public class CustomEndpointTests
             map: a => a.MapResource<Device>().MapGet("/echo/{value}", (string value) => Results.Text(value)));
         try
         {
-            var response = await client.GetAsync("/api/devices/echo/hello");
+            var response = await client.GetAsync("/api/devices/echo/hello", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Equal("hello", await response.Content.ReadAsStringAsync());
+            Assert.Equal("hello", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 }

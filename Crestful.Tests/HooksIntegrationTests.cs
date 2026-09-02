@@ -21,7 +21,7 @@ public class HooksIntegrationTests
             }));
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" });
+            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, create.StatusCode);
 
             Assert.Equal(
@@ -30,7 +30,7 @@ public class HooksIntegrationTests
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -51,7 +51,7 @@ public class HooksIntegrationTests
             }));
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" });
+            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.Created, create.StatusCode);
 
             Assert.Equal(
@@ -60,7 +60,7 @@ public class HooksIntegrationTests
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -78,19 +78,19 @@ public class HooksIntegrationTests
             }));
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" });
-            var created = await create.Content.ReadFromJsonAsync<Device>();
+            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" }, TestContext.Current.CancellationToken);
+            var created = await create.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
 
-            await client.PutAsJsonAsync($"/api/devices/{created!.Id}", new { id = created.Id, name = "Y" });
+            await client.PutAsJsonAsync($"/api/devices/{created!.Id}", new { id = created.Id, name = "Y" }, TestContext.Current.CancellationToken);
             Assert.Equal(new[] { "before-update", "after-update" }, log);
             log.Clear();
 
-            await client.DeleteAsync($"/api/devices/{created.Id}");
+            await client.DeleteAsync($"/api/devices/{created.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(new[] { "before-delete", "after-delete" }, log);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -108,13 +108,13 @@ public class HooksIntegrationTests
             }));
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { name = "Original" });
-            var created = await create.Content.ReadFromJsonAsync<Device>();
+            var create = await client.PostAsJsonAsync("/api/devices", new { name = "Original" }, TestContext.Current.CancellationToken);
+            var created = await create.Content.ReadFromJsonAsync<Device>(TestContext.Current.CancellationToken);
             Assert.Equal("Overridden", created!.Name);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -125,13 +125,13 @@ public class HooksIntegrationTests
             configureServices: s => s.AddScoped<IResourceHook<Device>, ThrowingHook>());
         try
         {
-            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" });
+            var create = await client.PostAsJsonAsync("/api/devices", new { name = "X" }, TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.InternalServerError, create.StatusCode);
             Assert.Equal("application/problem+json", create.Content.Headers.ContentType?.MediaType);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 

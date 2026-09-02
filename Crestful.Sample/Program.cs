@@ -49,7 +49,7 @@ app.MapGet("/", () =>
         new BodyElement(
             new DivElement(
                 new Heading1Element("Crestful Sample API"),
-                new ParagraphElement("A demo of the Crestful convention-first REST framework. Device resource is seeded with data and has soft delete enabled.").Class("subtitle"),
+                new ParagraphElement("A demo of the Crestful convention-first REST framework. Device resource is seeded with data and has soft delete and auditing enabled.").Class("subtitle"),
 
                 EndpointSection("Resources", new[]
                 {
@@ -72,7 +72,7 @@ app.MapGet("/", () =>
                     ("GET", "/api/devices?field=Name,Model",               "Field selection"),
                 }),
 
-                NoteSection("Soft Delete is enabled on Device. DELETE stamps DeletedAt instead of removing. GET/list hides soft-deleted items. PUT/PATCH on a soft-deleted item restores it.")
+                NoteSection("Soft Delete is enabled on Device. DELETE stamps DeletedAt instead of removing. GET/list hides soft-deleted items. PUT/PATCH on a soft-deleted item restores it. Auditing is also enabled: CreatedAt/UpdatedAt/CreatedBy/UpdatedBy are populated automatically.")
             ).Class("container")
         )
     );
@@ -80,7 +80,11 @@ app.MapGet("/", () =>
     return page.ToHtmlResult();
 });
 
-app.MapResource<Device>(o => o.SoftDelete.Enabled = true);
+app.MapResource<Device>(o =>
+{
+    o.SoftDelete.Enabled = true;
+    o.Auditing.Enabled = true;
+});
 app.MapResource<Reading>();
 
 using (var scope = app.Services.CreateScope())

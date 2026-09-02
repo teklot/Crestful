@@ -80,6 +80,16 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
             return validation;
         }
 
+        if (_info.AuditingEnabled)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var user = http.User.Identity?.Name;
+            _info.SetCreatedAt(resource, now);
+            _info.SetUpdatedAt(resource, now);
+            _info.SetCreatedBy(resource, user);
+            _info.SetUpdatedBy(resource, user);
+        }
+
         var dataSource = ResolveDataSource(http);
         var context = new CreateContext<TResource> { HttpContext = http, ResourceInfo = _info, Resource = resource };
 
@@ -130,6 +140,14 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         if (validation is not null)
         {
             return validation;
+        }
+
+        if (_info.AuditingEnabled)
+        {
+            _info.SetCreatedAt(resource, _info.GetCreatedAt(original) ?? DateTimeOffset.UtcNow);
+            _info.SetCreatedBy(resource, _info.GetCreatedBy(original));
+            _info.SetUpdatedAt(resource, DateTimeOffset.UtcNow);
+            _info.SetUpdatedBy(resource, http.User.Identity?.Name);
         }
 
         var context = new UpdateContext<TResource>
@@ -186,6 +204,14 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         if (validation is not null)
         {
             return validation;
+        }
+
+        if (_info.AuditingEnabled)
+        {
+            _info.SetCreatedAt(original, _info.GetCreatedAt(original) ?? DateTimeOffset.UtcNow);
+            _info.SetCreatedBy(original, _info.GetCreatedBy(original));
+            _info.SetUpdatedAt(original, DateTimeOffset.UtcNow);
+            _info.SetUpdatedBy(original, http.User.Identity?.Name);
         }
 
         var context = new UpdateContext<TResource>

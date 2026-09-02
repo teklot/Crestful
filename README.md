@@ -56,7 +56,7 @@ public sealed class Device : IResource
 }
 ```
 
-That class — plus `AddResources()` and `MapResources()` — gives you `GET`, `GET/{id}`, `POST`, `PUT`, `PATCH`, and `DELETE` against `/api/devices`. Add `?where=`, `?sort=`, `?page=`, `?search=`, and `?field=` query parameters and the list endpoint filters, sorts, paginates, searches, and selects fields. Implement `ISoftDeletable` and enable soft delete to get automatic soft-delete behavior with restore on PUT/PATCH.
+That class — plus `AddResources()` and `MapResources()` — gives you `GET`, `GET/{id}`, `POST`, `PUT`, `PATCH`, and `DELETE` against `/api/devices`. Add `?where=`, `?sort=`, `?page=`, `?search=`, and `?field=` query parameters and the list endpoint filters, sorts, paginates, searches, and selects fields. Implement `ISoftDeletable` for soft delete (with restore on PUT/PATCH) or `IAuditable` for automatic audit timestamps and user tracking.
 
 ### Discovery, Zero Registration
 
@@ -110,6 +110,27 @@ public sealed class Device : IResource, ISoftDeletable
 }
 
 app.MapResource<Device>(o => o.SoftDelete.Enabled = true);
+```
+
+### Auditing
+
+Resources that implement `IAuditable` opt into automatic auditing. The endpoints stay the same — `CreatedAt`, `UpdatedAt`, `CreatedBy`, and `UpdatedBy` are populated automatically:
+
+- **POST** sets `CreatedAt`/`UpdatedAt` to now and `CreatedBy`/`UpdatedBy` from `HttpContext.User.Identity?.Name`
+- **PUT / PATCH** update `UpdatedAt`/`UpdatedBy` while preserving the original `CreatedAt`/`CreatedBy`
+
+```csharp
+public sealed class Device : IResource, IAuditable
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public string? UpdatedBy { get; set; }
+}
+
+app.MapResource<Device>(o => o.Auditing.Enabled = true);
 ```
 
 ### Escape Hatches
@@ -196,6 +217,8 @@ For a resource `Device` (key `int`), with the default `api` route prefix:
 
 Keys are discovered by convention — `[Key]`, `Id`, `{TypeName}Id`, or the type name with a trailing `Resource` stripped — and may be numeric, `Guid`, or `string`. Related resources are plain `IResource` classes with a foreign key; send a nested graph in one request and it persists in a single transaction.
 
+> **Note on behavior toggles:** The endpoints above are the same regardless of features, but the behavior can change. With soft delete enabled, `DELETE` stamps `DeletedAt` instead of removing, `GET`/`GET /{id}` hide soft-deleted items, and `PUT`/`PATCH` restore them. With auditing enabled, `POST`/`PUT`/`PATCH` populate `CreatedAt`/`UpdatedAt`/`CreatedBy`/`UpdatedBy` automatically. See [Soft Delete](#soft-delete) and [Auditing](#auditing).
+
 ## Supported Frameworks
 
 - **.NET 8+**: `net8.0` and `net10.0` packages.
@@ -203,8 +226,4 @@ Keys are discovered by convention — `[Key]`, `Id`, `{TypeName}Id`, or the type
 
 ## Documentation
 
-- [Getting started](docs/GETTING_STARTED.md) — resources, keys, persistence, validation, hooks, query engine, soft delete, and custom endpoints.
-
-## License
-
-[Apache 2.0](LICENSE)
+- [Getting started](docs/GETTING_STARTED.md) — resources, keys, persistence, validation, hooks, query engine, soft delete, auditing, and custom endpoints.

@@ -13,21 +13,21 @@ public class QueryIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            await client.PostAsJsonAsync("/api/devices", new { name = "Thermostat", model = "T100", quantity = 3 });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Sensor", model = "S200", quantity = 5 });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Thermostat Pro", model = "T300", quantity = 7 });
+            await client.PostAsJsonAsync("/api/devices", new { name = "Thermostat", model = "T100", quantity = 3 }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Sensor", model = "S200", quantity = 5 }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Thermostat Pro", model = "T300", quantity = 7 }, TestContext.Current.CancellationToken);
 
-            var response = await client.GetAsync("/api/devices?where={\"Name\":\"Sensor\"}");
+            var response = await client.GetAsync("/api/devices?where={\"Name\":\"Sensor\"}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var devices = await response.Content.ReadFromJsonAsync<List<Device>>();
+            var devices = await response.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices);
             Assert.Single(devices!);
             Assert.Equal("Sensor", devices[0].Name);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -37,14 +37,14 @@ public class QueryIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            await client.PostAsJsonAsync("/api/devices", new { name = "Charlie", model = "C", quantity = 30 });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Alpha", model = "A", quantity = 10 });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Bravo", model = "B", quantity = 20 });
+            await client.PostAsJsonAsync("/api/devices", new { name = "Charlie", model = "C", quantity = 30 }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Alpha", model = "A", quantity = 10 }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Bravo", model = "B", quantity = 20 }, TestContext.Current.CancellationToken);
 
-            var response = await client.GetAsync("/api/devices?sort=Name");
+            var response = await client.GetAsync("/api/devices?sort=Name", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var devices = await response.Content.ReadFromJsonAsync<List<Device>>();
+            var devices = await response.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices);
             Assert.Equal(3, devices!.Count);
             Assert.Equal("Alpha", devices[0].Name);
@@ -53,7 +53,7 @@ public class QueryIntegrationTests
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -63,14 +63,14 @@ public class QueryIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            await client.PostAsJsonAsync("/api/devices", new { name = "Alpha", model = "A", quantity = 10 });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Bravo", model = "B", quantity = 20 });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Charlie", model = "C", quantity = 30 });
+            await client.PostAsJsonAsync("/api/devices", new { name = "Alpha", model = "A", quantity = 10 }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Bravo", model = "B", quantity = 20 }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Charlie", model = "C", quantity = 30 }, TestContext.Current.CancellationToken);
 
-            var response = await client.GetAsync("/api/devices?sort=-Quantity");
+            var response = await client.GetAsync("/api/devices?sort=-Quantity", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var devices = await response.Content.ReadFromJsonAsync<List<Device>>();
+            var devices = await response.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices);
             Assert.Equal(3, devices!.Count);
             Assert.Equal(30, devices[0].Quantity);
@@ -79,7 +79,7 @@ public class QueryIntegrationTests
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -91,30 +91,30 @@ public class QueryIntegrationTests
         {
             for (var i = 0; i < 5; i++)
             {
-                await client.PostAsJsonAsync("/api/devices", new { name = $"Device{i}", model = $"M{i}", quantity = i * 10 });
+                await client.PostAsJsonAsync("/api/devices", new { name = $"Device{i}", model = $"M{i}", quantity = i * 10 }, TestContext.Current.CancellationToken);
             }
 
-            var page1 = await client.GetAsync("/api/devices?page=1&max_results=2");
+            var page1 = await client.GetAsync("/api/devices?page=1&max_results=2", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, page1.StatusCode);
-            var devices1 = await page1.Content.ReadFromJsonAsync<List<Device>>();
+            var devices1 = await page1.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices1);
             Assert.Equal(2, devices1!.Count);
 
-            var page2 = await client.GetAsync("/api/devices?page=2&max_results=2");
+            var page2 = await client.GetAsync("/api/devices?page=2&max_results=2", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, page2.StatusCode);
-            var devices2 = await page2.Content.ReadFromJsonAsync<List<Device>>();
+            var devices2 = await page2.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices2);
             Assert.Equal(2, devices2!.Count);
 
-            var page3 = await client.GetAsync("/api/devices?page=3&max_results=2");
+            var page3 = await client.GetAsync("/api/devices?page=3&max_results=2", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, page3.StatusCode);
-            var devices3 = await page3.Content.ReadFromJsonAsync<List<Device>>();
+            var devices3 = await page3.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices3);
             Assert.Single(devices3!);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -124,12 +124,12 @@ public class QueryIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            await client.PostAsJsonAsync("/api/devices", new { name = "Thermostat", model = "T100", quantity = 3 });
+            await client.PostAsJsonAsync("/api/devices", new { name = "Thermostat", model = "T100", quantity = 3 }, TestContext.Current.CancellationToken);
 
-            var response = await client.GetAsync("/api/devices?field=Name,Model");
+            var response = await client.GetAsync("/api/devices?field=Name,Model", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var json = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             var doc = JsonDocument.Parse(json);
             var items = doc.RootElement;
 
@@ -143,7 +143,7 @@ public class QueryIntegrationTests
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -153,21 +153,21 @@ public class QueryIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            await client.PostAsJsonAsync("/api/devices", new { name = "Temperature Sensor", model = "T100" });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Humidity Sensor", model = "H200" });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Power Meter", model = "P300" });
+            await client.PostAsJsonAsync("/api/devices", new { name = "Temperature Sensor", model = "T100" }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Humidity Sensor", model = "H200" }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Power Meter", model = "P300" }, TestContext.Current.CancellationToken);
 
-            var response = await client.GetAsync("/api/devices?search=Temperature");
+            var response = await client.GetAsync("/api/devices?search=Temperature", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var devices = await response.Content.ReadFromJsonAsync<List<Device>>();
+            var devices = await response.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices);
             Assert.Single(devices!);
             Assert.Equal("Temperature Sensor", devices[0].Name);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -177,14 +177,14 @@ public class QueryIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            await client.PostAsJsonAsync("/api/devices", new { name = "Alpha", model = "A", quantity = 30 });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Beta", model = "B", quantity = 10 });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Gamma", model = "A", quantity = 20 });
+            await client.PostAsJsonAsync("/api/devices", new { name = "Alpha", model = "A", quantity = 30 }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Beta", model = "B", quantity = 10 }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Gamma", model = "A", quantity = 20 }, TestContext.Current.CancellationToken);
 
-            var response = await client.GetAsync("/api/devices?where={\"Model\":\"A\"}&sort=-Quantity");
+            var response = await client.GetAsync("/api/devices?where={\"Model\":\"A\"}&sort=-Quantity", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var devices = await response.Content.ReadFromJsonAsync<List<Device>>();
+            var devices = await response.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices);
             Assert.Equal(2, devices!.Count);
             Assert.Equal("Alpha", devices[0].Name);
@@ -194,7 +194,7 @@ public class QueryIntegrationTests
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -204,19 +204,19 @@ public class QueryIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            await client.PostAsJsonAsync("/api/devices", new { name = "A", model = "A" });
-            await client.PostAsJsonAsync("/api/devices", new { name = "B", model = "B" });
+            await client.PostAsJsonAsync("/api/devices", new { name = "A", model = "A" }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "B", model = "B" }, TestContext.Current.CancellationToken);
 
-            var response = await client.GetAsync("/api/devices");
+            var response = await client.GetAsync("/api/devices", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var devices = await response.Content.ReadFromJsonAsync<List<Device>>();
+            var devices = await response.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices);
             Assert.Equal(2, devices!.Count);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -226,18 +226,18 @@ public class QueryIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            await client.PostAsJsonAsync("/api/devices", new { name = "A", model = "A" });
+            await client.PostAsJsonAsync("/api/devices", new { name = "A", model = "A" }, TestContext.Current.CancellationToken);
 
-            var response = await client.GetAsync("/api/devices?where=not-json");
+            var response = await client.GetAsync("/api/devices?where=not-json", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var devices = await response.Content.ReadFromJsonAsync<List<Device>>();
+            var devices = await response.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices);
             Assert.Single(devices!);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -253,19 +253,19 @@ public class QueryIntegrationTests
         {
             for (var i = 0; i < 10; i++)
             {
-                await client.PostAsJsonAsync("/api/devices", new { name = $"Device{i}", model = $"M{i}" });
+                await client.PostAsJsonAsync("/api/devices", new { name = $"Device{i}", model = $"M{i}" }, TestContext.Current.CancellationToken);
             }
 
-            var response = await client.GetAsync("/api/devices?max_results=100");
+            var response = await client.GetAsync("/api/devices?max_results=100", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var devices = await response.Content.ReadFromJsonAsync<List<Device>>();
+            var devices = await response.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices);
             Assert.Equal(3, devices!.Count);
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 
@@ -275,13 +275,13 @@ public class QueryIntegrationTests
         var (app, client) = await TestHostHelper.CreateAsync();
         try
         {
-            await client.PostAsJsonAsync("/api/devices", new { name = "Active", model = "A", isActive = true });
-            await client.PostAsJsonAsync("/api/devices", new { name = "Inactive", model = "B", isActive = false });
+            await client.PostAsJsonAsync("/api/devices", new { name = "Active", model = "A", isActive = true }, TestContext.Current.CancellationToken);
+            await client.PostAsJsonAsync("/api/devices", new { name = "Inactive", model = "B", isActive = false }, TestContext.Current.CancellationToken);
 
-            var response = await client.GetAsync("/api/devices?where={\"IsActive\":false}");
+            var response = await client.GetAsync("/api/devices?where={\"IsActive\":false}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            var devices = await response.Content.ReadFromJsonAsync<List<Device>>();
+            var devices = await response.Content.ReadFromJsonAsync<List<Device>>(TestContext.Current.CancellationToken);
             Assert.NotNull(devices);
             Assert.Single(devices!);
             Assert.Equal("Inactive", devices[0].Name);
@@ -289,7 +289,7 @@ public class QueryIntegrationTests
         }
         finally
         {
-            await app.StopAsync();
+            await app.StopAsync(TestContext.Current.CancellationToken);
         }
     }
 }
