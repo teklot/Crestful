@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using Crestful.Query;
 
 namespace Crestful;
@@ -22,6 +23,18 @@ public sealed class InMemoryResourceDataSource<TResource> : IResourceDataSource<
 
     /// <summary>Number of items currently stored.</summary>
     public int Count => _store.Count;
+
+    /// <summary>
+    /// Generates a fresh version token. Note that this data source hands out live instances from the
+    /// store, so it cannot detect a lost update that races between read and write; EF Core's
+    /// concurrency tokens are what close that window.
+    /// </summary>
+    private static byte[] NextRowVersion()
+    {
+        var token = new byte[8];
+        RandomNumberGenerator.Fill(token);
+        return token;
+    }
 
     /// <inheritdoc />
     public Task<IReadOnlyList<TResource>> ListAsync(CancellationToken cancellationToken)
@@ -57,6 +70,13 @@ public sealed class InMemoryResourceDataSource<TResource> : IResourceDataSource<
                 $"A resource of type '{typeof(TResource).Name}' with key '{key}' already exists.");
         }
 
+        // This data source owns the store, so it mints the version token rather than leaving it to a
+        // database. Any client-supplied token is discarded.
+        if (_info.ConcurrencyEnabled)
+        {
+            _info.SetRowVersion(resource, NextRowVersion());
+        }
+
         return Task.FromResult(resource);
     }
 
@@ -75,6 +95,11 @@ public sealed class InMemoryResourceDataSource<TResource> : IResourceDataSource<
         }
 
         ResourceValueCopier.Copy(_info, resource, original);
+        if (_info.ConcurrencyEnabled)
+        {
+            _info.SetRowVersion(original, NextRowVersion());
+        }
+
         _store[key] = original;
         return Task.FromResult<TResource?>(original);
     }

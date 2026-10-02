@@ -41,3 +41,23 @@ public sealed class ResourceConflictException : Exception
     {
     }
 }
+
+/// <summary>
+/// Raised by a data source when a write is rejected because the stored resource changed since it was
+/// read. Data sources translate their store-specific concurrency failure into this exception, which
+/// the generated endpoints surface as <c>412 Precondition Failed</c>.
+/// </summary>
+public sealed class ResourceConcurrencyException : Exception
+{
+    /// <summary>Creates a concurrency exception with the given <paramref name="message"/>.</summary>
+    public ResourceConcurrencyException(string message)
+        : base(message)
+    {
+    }
+
+    /// <summary>Creates a concurrency exception with the given <paramref name="message"/> and cause.</summary>
+    public ResourceConcurrencyException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+}

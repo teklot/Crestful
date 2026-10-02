@@ -27,6 +27,18 @@ internal static class ResourceErrors
         title: "Resource conflict",
         detail: $"A '{info.Name}' resource with the specified key already exists.");
 
+    public static IResult PreconditionRequired(ResourceInfo info) => Results.Problem(
+        statusCode: StatusCodes.Status428PreconditionRequired,
+        title: "Precondition required",
+        detail: $"An If-Match header is required to modify a '{info.Name}' resource. Read the resource first " +
+                "and send the ETag from that response.");
+
+    public static IResult PreconditionFailed(ResourceInfo info) => Results.Problem(
+        statusCode: StatusCodes.Status412PreconditionFailed,
+        title: "Precondition failed",
+        detail: "Client and server etags don't match. The resource was modified by someone else; " +
+                "re-read it and retry with the current ETag.");
+
     public static IResult ValidationFailed(ResourceValidationResult result)
     {
         var errors = new Dictionary<string, string[]>();

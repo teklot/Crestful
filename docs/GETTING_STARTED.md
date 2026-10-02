@@ -15,6 +15,7 @@ This guide walks through the core concepts of Crestful: defining resources, enab
 - [Query engine](#query-engine)
 - [Soft delete](#soft-delete)
 - [Auditing](#auditing)
+- [Concurrency](#concurrency)
 - [Configuration reference](#configuration-reference)
 
 ## Prerequisites
@@ -493,6 +494,91 @@ app.MapResource<Device>(o =>
 });
 ```
 
+## Concurrency
+
+Resources that implement `IHasRowVersion` can opt into optimistic concurrency control. The framework exposes the version token as an `ETag` and enforces the standard HTTP precondition contract, so any HTTP-aware client can take part without knowing anything about Crestful.
+
+### Define a versioned resource
+
+```csharp
+public sealed class Device : IResource, IHasRowVersion
+{
+    public int Id { get; set; }
+
+    [Required]
+    [StringLength(100)]
+    public string Name { get; set; } = string.Empty;
+
+    public byte[] RowVersion { get; set; } = [];
+}
+```
+
+Initialize `RowVersion` to an empty array. With `TreatWarningsAsErrors` this also avoids an uninitialized-non-nullable warning, and it satisfies the required-property checks that providers without row-version generation apply on insert.
+
+### Enable concurrency per resource
+
+```csharp
+app.MapResource<Device>(o => o.Concurrency.Enabled = true);
+```
+
+### Behavior
+
+| Request | Result |
+| --- | --- |
+| `GET /{id}` | `200` with `ETag` and `Last-Modified` |
+| `GET /{id}` with matching `If-None-Match` | `304` with `ETag` and `Last-Modified`, no body |
+| `GET /{id}` with `If-Modified-Since` at or after `Last-Modified` | `304` |
+| `PUT` / `PATCH` / `DELETE` with no `If-Match` | `428 Precondition Required` |
+| `PUT` / `PATCH` / `DELETE` with a stale `If-Match` | `412 Precondition Failed` |
+| `PUT` / `PATCH` with a current `If-Match` | `200` and a **new** `ETag` |
+
+`If-Match: *` is accepted and means "the resource must exist", as is a comma-separated list of tags. Tags are compared leniently: surrounding quotes and a `W/` weak prefix are stripped first, so clients may echo the `ETag` back exactly as received.
+
+There is no partial mode. Once enabled, `If-Match` is mandatory on every write — set `Enabled = false` to opt back out. A rejected precondition is answered before the request body is read, so no hooks run and nothing is written.
+
+Enabling auditing without concurrency is enough for date-based conditional `GET`: you get `Last-Modified` and `If-Modified-Since`, but no `ETag` and no `If-Match` requirement.
+
+> Concurrency applies to the endpoints Crestful generates. Handlers you register yourself through `MapGet`/`MapPut`/`MapPatch`/`MapDelete` on a resource's route group are not covered.
+
+### EF Core configuration
+
+On SQL Server, let the database maintain the token:
+
+```csharp
+modelBuilder.Entity<Device>().Property(d => d.RowVersion).IsRowVersion();
+```
+
+**EF Core's in-memory provider does not support `IsRowVersion`.** It neither generates values nor tolerates them being null, and since EF Core 6 it throws `DbUpdateException: Required properties '{RowVersion}' are missing`. Configure a plain concurrency token and maintain the value yourself instead:
+
+```csharp
+modelBuilder.Entity<Device>().Property(d => d.RowVersion).IsConcurrencyToken();
+
+public override int SaveChanges(bool acceptAllChangesOnSuccess)
+{
+    foreach (var entry in ChangeTracker.Entries<Device>())
+    {
+        if (entry.State is EntityState.Added or EntityState.Modified)
+        {
+            entry.Property(d => d.RowVersion).CurrentValue = NewToken();
+        }
+    }
+
+    return base.SaveChanges(acceptAllChangesOnSuccess);
+}
+```
+
+Either way, Crestful only translates the store's failure: EF Core's `DbUpdateConcurrencyException` becomes a `412`. That is what closes the race between reading the resource and saving the change, which a header comparison alone cannot do.
+
+### Custom field name
+
+```csharp
+app.MapResource<Device>(o =>
+{
+    o.Concurrency.Enabled = true;
+    o.Concurrency.RowVersionFieldName = "Version";
+});
+```
+
 ## Configuration reference
 
 ### `CrestfulOptions` (passed to `AddResources`)
@@ -517,6 +603,7 @@ app.MapResource<Device>(o =>
 | `Query` | default | Query engine configuration (see [Query engine](#query-engine)) |
 | `SoftDelete` | default | Soft delete configuration (see [Soft delete](#soft-delete)) |
 | `Auditing` | default | Auditing configuration (see [Auditing](#auditing)) |
+| `Concurrency` | default | Concurrency configuration (see [Concurrency](#concurrency)) |
 
 For example, disable delete and rename the route globally:
 

@@ -126,6 +126,10 @@ public class ResourceInfo
         }
     }
 
+    /// <summary>Reads the last update timestamp from a resource instance.</summary>
+    public DateTimeOffset? GetUpdatedAt(object instance)
+        => AuditingEnabled ? (DateTimeOffset?)UpdatedAtProperty!.GetValue(instance) : null;
+
     /// <summary>Sets the creator's identity on a resource instance.</summary>
     public void SetCreatedBy(object instance, string? value)
     {
@@ -158,6 +162,40 @@ public class ResourceInfo
         if (SoftDeleteEnabled)
         {
             DeletedAtProperty!.SetValue(instance, value);
+        }
+    }
+
+    /// <summary>Whether the resource implements <see cref="IHasRowVersion"/>.</summary>
+    public bool IsRowVersionable => typeof(IHasRowVersion).IsAssignableFrom(ResourceType);
+
+    /// <summary>Whether optimistic concurrency is actively enabled for this resource.</summary>
+    public bool ConcurrencyEnabled => Options.Concurrency.Enabled && IsRowVersionable;
+
+    /// <summary>
+    /// Whether HTTP conditional request handling applies to this resource. This is true when
+    /// concurrency is enabled, and also when auditing is enabled — auditing supplies the
+    /// <c>Last-Modified</c> validator that <c>If-Modified-Since</c> needs.
+    /// </summary>
+    public bool ConditionalRequestsEnabled => ConcurrencyEnabled || AuditingEnabled;
+
+    private PropertyInfo? _rowVersionProperty;
+
+    /// <summary>
+    /// The property that stores the version token, resolved from the configured field name.
+    /// Returns <c>null</c> if the resource does not implement <see cref="IHasRowVersion"/>.
+    /// </summary>
+    public PropertyInfo? RowVersionProperty => _rowVersionProperty ??= FindAuditProperty(ResourceType, Options.Concurrency.RowVersionFieldName);
+
+    /// <summary>Reads the version token from a resource instance.</summary>
+    public byte[]? GetRowVersion(object instance)
+        => ConcurrencyEnabled ? (byte[]?)RowVersionProperty!.GetValue(instance) : null;
+
+    /// <summary>Sets the version token on a resource instance.</summary>
+    public void SetRowVersion(object instance, byte[]? value)
+    {
+        if (ConcurrencyEnabled)
+        {
+            RowVersionProperty!.SetValue(instance, value);
         }
     }
 

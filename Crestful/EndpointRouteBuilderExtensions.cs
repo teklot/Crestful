@@ -64,30 +64,48 @@ public static class EndpointRouteBuilderExtensions
         var routeGroup = new ResourceRouteGroup(group, typed);
         var endpoint = new ResourceEndpoint<TResource>(typed);
 
+        // Cross-cutting HTTP concerns live in an endpoint filter (roadmap Decision 2), so authorization
+        // and rate limiting in later releases can reuse the same pipeline.
+        RouteHandlerBuilder WithConcurrency(RouteHandlerBuilder builder, ConcurrencyRole role)
+            => typed.ConditionalRequestsEnabled
+                ? builder.AddEndpointFilter(new ResourceConcurrencyFilter<TResource>(typed, role))
+                : builder;
+
         if (typed.Options.ListEnabled)
         {
+            // No filter on the collection: a list response has no single entity tag to validate against.
             group.MapGet("", (Delegate)((HttpContext http) => endpoint.ListAsync(http)));
         }
 
         if (typed.Options.GetEnabled)
         {
-            group.MapGet("{id}", (Delegate)((HttpContext http) => endpoint.GetAsync(http))).WithName($"crest:{typed.Name}:get");
+            WithConcurrency(
+                group.MapGet("{id}", (Delegate)((HttpContext http) => endpoint.GetAsync(http))),
+                ConcurrencyRole.Get).WithName($"crest:{typed.Name}:get");
         }
 
         if (typed.Options.CreateEnabled)
         {
-            group.MapPost("", (Delegate)((HttpContext http) => endpoint.CreateAsync(http)));
+            WithConcurrency(
+                group.MapPost("", (Delegate)((HttpContext http) => endpoint.CreateAsync(http))),
+                ConcurrencyRole.Create);
         }
 
         if (typed.Options.UpdateEnabled)
         {
-            group.MapPut("{id}", (Delegate)((HttpContext http) => endpoint.UpdateAsync(http)));
-            group.MapPatch("{id}", (Delegate)((HttpContext http) => endpoint.PatchAsync(http)));
+            WithConcurrency(
+                group.MapPut("{id}", (Delegate)((HttpContext http) => endpoint.UpdateAsync(http))),
+                ConcurrencyRole.Update);
+            WithConcurrency(
+                group.MapPatch("{id}", (Delegate)((HttpContext http) => endpoint.PatchAsync(http))),
+                ConcurrencyRole.Patch);
         }
 
         if (typed.Options.DeleteEnabled)
         {
-            group.MapDelete("{id}", (Delegate)((HttpContext http) => endpoint.DeleteAsync(http)));
+            WithConcurrency(
+                group.MapDelete("{id}", (Delegate)((HttpContext http) => endpoint.DeleteAsync(http))),
+                ConcurrencyRole.Delete);
         }
 
         return routeGroup;

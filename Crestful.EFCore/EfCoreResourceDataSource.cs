@@ -43,7 +43,7 @@ public sealed class EfCoreResourceDataSource<TResource, TDbContext> : IResourceD
     public async Task<TResource> CreateAsync(TResource resource, CancellationToken cancellationToken)
     {
         _db.Set<TResource>().Add(resource);
-        await _db.SaveChangesAsync(cancellationToken);
+        await SaveAsync(cancellationToken);
         return resource;
     }
 
@@ -59,12 +59,12 @@ public sealed class EfCoreResourceDataSource<TResource, TDbContext> : IResourceD
             }
 
             ResourceValueCopier.Copy(_info, resource, existing);
-            await _db.SaveChangesAsync(cancellationToken);
+            await SaveAsync(cancellationToken);
             return existing;
         }
 
         ResourceValueCopier.Copy(_info, resource, original);
-        await _db.SaveChangesAsync(cancellationToken);
+        await SaveAsync(cancellationToken);
         return original;
     }
 
@@ -80,12 +80,30 @@ public sealed class EfCoreResourceDataSource<TResource, TDbContext> : IResourceD
         if (_info.SoftDeleteEnabled)
         {
             _info.SetDeletedAt(existing, DateTimeOffset.UtcNow);
-            await _db.SaveChangesAsync(cancellationToken);
+            await SaveAsync(cancellationToken);
             return true;
         }
 
         _db.Remove(existing);
-        await _db.SaveChangesAsync(cancellationToken);
+        await SaveAsync(cancellationToken);
         return true;
+    }
+
+    /// <summary>
+    /// Saves pending changes, translating EF Core's concurrency failure into
+    /// <see cref="ResourceConcurrencyException"/> so the endpoints can answer 412. The row version
+    /// itself is maintained by the database, not here.
+    /// </summary>
+    private async Task<int> SaveAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new ResourceConcurrencyException(
+                $"'{typeof(TResource).Name}' was modified by another request before this one could save.", ex);
+        }
     }
 }

@@ -35,6 +35,9 @@ public class ResourceOptions
 
     /// <summary>Auditing configuration for the resource.</summary>
     public ResourceAuditingOptions Auditing { get; set; } = new();
+
+    /// <summary>Concurrency configuration for the resource.</summary>
+    public ResourceConcurrencyOptions Concurrency { get; set; } = new();
 }
 
 /// <summary>
@@ -116,6 +119,27 @@ public class ResourceAuditingOptions
     /// Defaults to <c>"UpdatedBy"</c>.
     /// </summary>
     public string UpdatedByFieldName { get; set; } = "UpdatedBy";
+}
+
+/// <summary>
+/// Configuration for optimistic concurrency control on a per-resource basis. Concurrency requires
+/// the resource to implement <see cref="IHasRowVersion"/>. When enabled, <c>GET</c> responses carry an
+/// <c>ETag</c> header, <c>PUT</c>/<c>PATCH</c>/<c>DELETE</c> require a matching <c>If-Match</c> header,
+/// and <c>GET</c> honors <c>If-None-Match</c> and <c>If-Modified-Since</c>.
+/// </summary>
+public class ResourceConcurrencyOptions
+{
+    /// <summary>
+    /// Whether optimistic concurrency is enabled for this resource. Defaults to <c>false</c>. There is
+    /// no partial mode: when enabled, <c>If-Match</c> is mandatory on every update and delete.
+    /// </summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>
+    /// The property name on the resource that stores the version token.
+    /// Defaults to <c>"RowVersion"</c>.
+    /// </summary>
+    public string RowVersionFieldName { get; set; } = "RowVersion";
 }
 
 /// <summary>

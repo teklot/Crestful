@@ -52,7 +52,7 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         }
 
         var dataSource = ResolveDataSource(http);
-        var item = await dataSource.GetAsync(key!, http.RequestAborted);
+        var item = ResourceRequestState.Take<TResource>(http) ?? await dataSource.GetAsync(key!, http.RequestAborted);
         if (item is null)
         {
             return ResourceErrors.NotFound(_info);
@@ -122,7 +122,7 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         }
 
         var dataSource = ResolveDataSource(http);
-        var original = await dataSource.GetAsync(key!, http.RequestAborted);
+        var original = ResourceRequestState.Take<TResource>(http) ?? await dataSource.GetAsync(key!, http.RequestAborted);
         if (original is null)
         {
             return ResourceErrors.NotFound(_info);
@@ -166,7 +166,16 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
             _info.SetDeletedAt(original, null);
         }
 
-        var updated = await dataSource.UpdateAsync(resource, original, http.RequestAborted);
+        TResource? updated;
+        try
+        {
+            updated = await dataSource.UpdateAsync(resource, original, http.RequestAborted);
+        }
+        catch (ResourceConcurrencyException)
+        {
+            return ResourceErrors.PreconditionFailed(_info);
+        }
+
         if (updated is null)
         {
             return ResourceErrors.NotFound(_info);
@@ -186,7 +195,7 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         }
 
         var dataSource = ResolveDataSource(http);
-        var original = await dataSource.GetAsync(key!, http.RequestAborted);
+        var original = ResourceRequestState.Take<TResource>(http) ?? await dataSource.GetAsync(key!, http.RequestAborted);
         if (original is null)
         {
             return ResourceErrors.NotFound(_info);
@@ -230,7 +239,16 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
             _info.SetDeletedAt(original, null);
         }
 
-        var updated = await dataSource.UpdateAsync(original, original, http.RequestAborted);
+        TResource? updated;
+        try
+        {
+            updated = await dataSource.UpdateAsync(original, original, http.RequestAborted);
+        }
+        catch (ResourceConcurrencyException)
+        {
+            return ResourceErrors.PreconditionFailed(_info);
+        }
+
         if (updated is null)
         {
             return ResourceErrors.NotFound(_info);
@@ -250,7 +268,7 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         }
 
         var dataSource = ResolveDataSource(http);
-        var existing = await dataSource.GetAsync(key!, http.RequestAborted);
+        var existing = ResourceRequestState.Take<TResource>(http) ?? await dataSource.GetAsync(key!, http.RequestAborted);
         if (existing is null)
         {
             return ResourceErrors.NotFound(_info);
@@ -261,22 +279,29 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         await InvokeDeleteHooksAsync(http, context, before: true);
         await InvokeSaveHooksAsync(http, before: true);
 
-        if (_info.SoftDeleteEnabled)
+        try
         {
-            _info.SetDeletedAt(existing, DateTimeOffset.UtcNow);
-            var updated = await dataSource.UpdateAsync(existing, existing, http.RequestAborted);
-            if (updated is null)
+            if (_info.SoftDeleteEnabled)
             {
-                return ResourceErrors.NotFound(_info);
+                _info.SetDeletedAt(existing, DateTimeOffset.UtcNow);
+                var updated = await dataSource.UpdateAsync(existing, existing, http.RequestAborted);
+                if (updated is null)
+                {
+                    return ResourceErrors.NotFound(_info);
+                }
+            }
+            else
+            {
+                var removed = await dataSource.DeleteAsync(key!, http.RequestAborted);
+                if (!removed)
+                {
+                    return ResourceErrors.NotFound(_info);
+                }
             }
         }
-        else
+        catch (ResourceConcurrencyException)
         {
-            var removed = await dataSource.DeleteAsync(key!, http.RequestAborted);
-            if (!removed)
-            {
-                return ResourceErrors.NotFound(_info);
-            }
+            return ResourceErrors.PreconditionFailed(_info);
         }
 
         await InvokeSaveHooksAsync(http, before: false);
@@ -321,13 +346,13 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         };
     }
 
-    private IResourceDataSource<TResource> ResolveDataSource(HttpContext http)
+    internal static IResourceDataSource<TResource> ResolveDataSource(HttpContext http)
     {
         return http.RequestServices.GetService<IResourceDataSource<TResource>>()
             ?? throw new InvalidOperationException(
-                $"No data source is registered for resource '{_info.Name}'. Register one with " +
-                $"AddEfCore()/AddEfCoreResource<,>(), or ensure the resource's assembly is discovered by " +
-                $"AddResources() so an in-memory data source is registered.");
+                $"No data source is registered for resource '{typeof(TResource).Name}'. Register one with " +
+                "AddEfCore()/AddEfCoreResource<,>(), or ensure the resource's assembly is discovered by " +
+                "AddResources() so an in-memory data source is registered.");
     }
 
     private async Task<TResource?> ReadBodyAsync(HttpContext http)
@@ -368,7 +393,9 @@ internal sealed class ResourceEndpoint<TResource> where TResource : class, IReso
         var namingPolicy = JsonOptions.PropertyNamingPolicy;
         foreach (var property in properties)
         {
-            if (property == _info.KeyProperty || !property.CanWrite)
+            // The key is authoritative from the route, and the version token belongs to the store —
+            // byte[] deserializes from base64, so without this a patch body could forge one.
+            if (property == _info.KeyProperty || property == _info.RowVersionProperty || !property.CanWrite)
             {
                 continue;
             }

@@ -10,7 +10,13 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>Crestful;REST;AspNetCore;MinimalAPI;API;Framework;dotnet-library</PackageTags>
-    <PackageReleaseNotes>Automatic auditing via IAuditable marker interface — CreatedAt/UpdatedAt/CreatedBy/UpdatedBy populated on create and update, configurable field names.</PackageReleaseNotes>
+    <PackageReleaseNotes>
+      Optimistic concurrency control for your resources.
+      - Validators: every response carries an entity tag and a last-modified date, so a client can say which version it read.
+      - Updates and deletes: the client must send that version back, otherwise the request is refused with 428 precondition required.
+      - Stale versions: a request built on an outdated version is rejected with 412 precondition failed, so nobody's changes are silently overwritten.
+      - Conditional reads: asking for a version that has not changed returns 304 not modified with no body.
+    </PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/teklot/Crestful</PackageProjectUrl>
     <RepositoryUrl>https://github.com/teklot/Crestful.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

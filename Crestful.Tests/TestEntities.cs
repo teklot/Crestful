@@ -153,3 +153,39 @@ public sealed class AuditedDevice : IResource, IAuditable
 
     public string? UpdatedBy { get; set; }
 }
+
+public sealed class VersionedDevice : IResource, IHasRowVersion, IAuditable
+{
+    public int Id { get; set; }
+
+    [Required]
+    [StringLength(100)]
+    public string? Name { get; set; }
+
+    public string? Model { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public string? CreatedBy { get; set; }
+
+    public string? UpdatedBy { get; set; }
+
+    // Initialized because EF Core's in-memory provider rejects unsaved required properties,
+    // and providers that do not generate row versions will not fill this in.
+    public byte[] RowVersion { get; set; } = [];
+}
+
+public sealed class VersionedSoftDeleteDevice : IResource, IHasRowVersion, ISoftDeletable
+{
+    public int Id { get; set; }
+
+    [Required]
+    [StringLength(100)]
+    public string? Name { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+
+    public byte[] RowVersion { get; set; } = [];
+}

@@ -12,7 +12,9 @@ internal static class ResourceValueCopier
     {
         foreach (var property in typeof(TResource).GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
-            if (property == info.KeyProperty)
+            // The key comes from the route and the version token is the store's to mint, so neither is
+            // copied from the incoming representation.
+            if (property == info.KeyProperty || property == info.RowVersionProperty)
             {
                 continue;
             }

@@ -5,18 +5,44 @@
 [![.NET](https://img.shields.io/badge/.NET-net8.0%20%7C%20net10.0-blue)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
-Most ASP.NET Core teams build the same thing: a `Controller`, a `Service`, a repository, request DTOs, response DTOs, a mapper, validation logic, and a `ProblemDetails` handler — duplicated across every API, each with different conventions, none composable. The resource gets described three times (entity, request, response), and adding one endpoint means touching controller, service, DI, and mapping by hand.
+Most ASP.NET Core teams build the same thing: a `Controller`, a `Service`, a repository, request DTOs, response DTOs, a mapper, validation logic, and a `ProblemDetails` handler, duplicated across every API, each with different conventions, none composable. The resource gets described three times (entity, request, response), and adding one endpoint means touching controller, service, DI, and mapping by hand.
 
-Crestful is the convention layer that sits on top of ASP.NET Core — **define a resource once, receive a production-ready REST API.** Not an app framework, not an alternative to ASP.NET Core. A thin productivity layer between your resource model and your endpoints.
+Crestful is the convention layer that sits on top of ASP.NET Core: **define a resource once, receive a production-ready REST API.** Not an app framework, not an alternative to ASP.NET Core. A thin productivity layer between your resource model and your endpoints.
 
 **Guiding principle:** Never replace the Microsoft ecosystem. Generate infrastructure, not business logic.
 
 **Crest** stands for **C**onvention-first **R**EST **E**ndpoints from **S**trongly-**T**yped resources; *Crestful* is the play on RESTful.
 
+## Table of Contents
+
+- [The Problem](#the-problem)
+- [How It Works](#how-it-works)
+  - [Discovery, Zero Registration](#discovery-zero-registration)
+  - [Persistence Without a Repository](#persistence-without-a-repository)
+  - [Validation On by Default](#validation-on-by-default)
+  - [Lifecycle Hooks](#lifecycle-hooks)
+  - [Errors in the Standard Shape](#errors-in-the-standard-shape)
+  - [Query Engine](#query-engine)
+  - [Soft Delete](#soft-delete)
+  - [Auditing](#auditing)
+  - [Concurrency](#concurrency)
+  - [Escape Hatches](#escape-hatches)
+- [Use Cases](#use-cases)
+  - [Rapid Prototypes](#rapid-prototypes)
+  - [Internal Enterprise CRUD](#internal-enterprise-crud)
+  - [SaaS & Admin Backends](#saas--admin-backends)
+- [Technical Differentiators](#technical-differentiators)
+- [Packages](#packages)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Generated Endpoints](#generated-endpoints)
+- [Supported Frameworks](#supported-frameworks)
+- [Documentation](#documentation)
+
 ## The Problem
 
 ```csharp
-// Typical API — every resource needs the same boilerplate, by hand:
+// Typical API: every resource needs the same boilerplate, by hand:
 public sealed class Controller : ControllerBase
 {
     [HttpGet]     public IActionResult List() => ...;
@@ -29,7 +55,7 @@ public sealed class Controller : ControllerBase
 }
 ```
 
-The resource is declared once and then re-declared as a request DTO, a response DTO, and again in EF. Validation, persistence wiring, and error handling are reinvented in every project. Teams that want CRUD infrastructure without adopting an opinionated app framework have no lightweight option on ASP.NET Core — the gap Eve filled for Python.
+The resource is declared once and then re-declared as a request DTO, a response DTO, and again in EF. Validation, persistence wiring, and error handling are reinvented in every project. Teams that want CRUD infrastructure without adopting an opinionated app framework have no lightweight option on ASP.NET Core. It is the gap Eve filled for Python.
 
 **Crestful eliminates the seam.** One strongly-typed class becomes the single source of truth, and the entire CRUD API derives from it.
 
@@ -56,15 +82,15 @@ public sealed class Device : IResource
 }
 ```
 
-That class — plus `AddResources()` and `MapResources()` — gives you `GET`, `GET/{id}`, `POST`, `PUT`, `PATCH`, and `DELETE` against `/api/devices`. Add `?where=`, `?sort=`, `?page=`, `?search=`, and `?field=` query parameters and the list endpoint filters, sorts, paginates, searches, and selects fields. Implement `ISoftDeletable` for soft delete (with restore on PUT/PATCH) or `IAuditable` for automatic audit timestamps and user tracking.
+That class, plus `AddResources()` and `MapResources()`, gives you `GET`, `GET/{id}`, `POST`, `PUT`, `PATCH`, and `DELETE` against `/api/devices`. Add `?where=`, `?sort=`, `?page=`, `?search=`, and `?field=` query parameters and the list endpoint filters, sorts, paginates, searches, and selects fields. Implement `ISoftDeletable` for soft delete (with restore on PUT/PATCH) or `IAuditable` for automatic audit timestamps and user tracking.
 
 ### Discovery, Zero Registration
 
-`AddResources()` scans the calling assemblies for `IResource` types. No per-resource service registration, no DTO mapping, no manual endpoint mapping — add a class, restart, the API exists.
+`AddResources()` scans the calling assemblies for `IResource` types. No per-resource service registration, no DTO mapping, no manual endpoint mapping. Add a class, restart, the API exists.
 
 ### Persistence Without a Repository
 
-Every resource gets a thread-safe in-memory data source by default, so prototypes work with zero setup. When you're ready for a database, one call swaps EF Core in — Crestful scans your `DbContext`s and backs every matching `DbSet<T>` resource with EF directly. No repository layer, no new abstraction.
+Every resource gets a thread-safe in-memory data source by default, so prototypes work with zero setup. When you're ready for a database, one call swaps EF Core in: Crestful scans your `DbContext`s and backs every matching `DbSet<T>` resource with EF directly. No repository layer, no new abstraction.
 
 ### Validation On by Default
 
@@ -72,7 +98,7 @@ Data Annotations validate every create, update, and patch automatically. FluentV
 
 ### Lifecycle Hooks
 
-Before/after hooks run around create, update, delete, and save — both configuration-based and dependency-injected. Audit logging, defaulting, side effects: every step of the lifecycle is an escape hatch.
+Before/after hooks run around create, update, delete, and save, both configuration-based and dependency-injected. Audit logging, defaulting, side effects: every step of the lifecycle is an escape hatch.
 
 ### Errors in the Standard Shape
 
@@ -80,7 +106,7 @@ Before/after hooks run around create, update, delete, and save — both configur
 
 ### Query Engine
 
-The list endpoint supports Eve-style query parameters out of the box — filtering, sorting, pagination, full-text search, and field selection. No query code to write:
+The list endpoint supports Eve-style query parameters out of the box: filtering, sorting, pagination, full-text search, and field selection. No query code to write:
 
 ```
 GET /api/devices?where={"Name":"Thermostat"}
@@ -114,7 +140,7 @@ app.MapResource<Device>(o => o.SoftDelete.Enabled = true);
 
 ### Auditing
 
-Resources that implement `IAuditable` opt into automatic auditing. The endpoints stay the same — `CreatedAt`, `UpdatedAt`, `CreatedBy`, and `UpdatedBy` are populated automatically:
+Resources that implement `IAuditable` opt into automatic auditing. The endpoints stay the same; `CreatedAt`, `UpdatedAt`, `CreatedBy`, and `UpdatedBy` are populated automatically:
 
 - **POST** sets `CreatedAt`/`UpdatedAt` to now and `CreatedBy`/`UpdatedBy` from `HttpContext.User.Identity?.Name`
 - **PUT / PATCH** update `UpdatedAt`/`UpdatedBy` while preserving the original `CreatedAt`/`CreatedBy`
@@ -133,9 +159,31 @@ public sealed class Device : IResource, IAuditable
 app.MapResource<Device>(o => o.Auditing.Enabled = true);
 ```
 
+### Concurrency
+
+Resources that implement `IHasRowVersion` opt into HTTP optimistic concurrency control, implemented with standard validators:
+
+- **GET /{id}** returns `ETag` and `Last-Modified`
+- **PUT / PATCH / DELETE** require an `If-Match` header: **428** without one, **412** if it no longer matches
+- **If-Match: \*** is accepted, as is a comma-separated list of tags
+- **GET** with a matching `If-None-Match`, or an `If-Modified-Since` at or after `Last-Modified`, returns **304**
+
+```csharp
+public sealed class Device : IResource, IHasRowVersion
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public byte[] RowVersion { get; set; } = [];
+}
+
+app.MapResource<Device>(o => o.Concurrency.Enabled = true);
+```
+
+There is no partial mode: once enabled, `If-Match` is mandatory on every write. Set `Enabled = false` to opt back out. Auditing alone is enough for date-based conditional `GET`, which needs no row version.
+
 ### Escape Hatches
 
-Every convention is overridable. Disable any operation per resource, override the route prefix, or map your own handlers onto a resource's route group — plain ASP.NET Core underneath, never a lock-in.
+Every convention is overridable. Disable any operation per resource, override the route prefix, or map your own handlers onto a resource's route group. Plain ASP.NET Core underneath, never a lock-in.
 
 ## Use Cases
 
@@ -149,23 +197,23 @@ Standardized endpoints, validation, and error handling across every internal ser
 
 ### SaaS & Admin Backends
 
-A resource definition is the contract. The same class drives the public API, an internal admin surface, and persistence — no parallel DTO hierarchies to keep in sync.
+A resource definition is the contract. The same class drives the public API, an internal admin surface, and persistence, with no parallel DTO hierarchies to keep in sync.
 
 ## Technical Differentiators
 
 | vs. | Crestful |
 |---|---|
 | **Hand-rolled controllers** | No controllers, services, repositories, or DTO mapping. The resource is the only artifact. |
-| **ABP framework** | Crestful is a thin convention layer, not an application framework — no opinions on project structure, persistence, or front end. |
+| **ABP framework** | Crestful is a thin convention layer, not an application framework, with no opinions on project structure, persistence, or front end. |
 | **EF Core alone** | EF gives you the store, not the API. Crestful composes EF Core and adds endpoints, validation, hooks, and errors on top. |
-| **Eve (Python)** | The same resource-first model, on ASP.NET Core Minimal APIs — built on Microsoft DI, routing, and ProblemDetails. |
+| **Eve (Python)** | The same resource-first model, on ASP.NET Core Minimal APIs, built on Microsoft DI, routing, and ProblemDetails. |
 
 ## Packages
 
 | Package | Description |
 |---|---|
 | **Crestful** | Core framework: resource discovery, endpoint generation, in-memory data source, query engine, hooks, custom endpoints, ProblemDetails. |
-| **Crestful.EFCore** | EF Core-backed data sources via `AddEfCore` / `AddEfCoreResource` — DbContext discovery, query translation, no repository layer. |
+| **Crestful.EFCore** | EF Core-backed data sources via `AddEfCore` / `AddEfCoreResource`: DbContext discovery, query translation, no repository layer. |
 | **Crestful.Validation** | Data Annotations + FluentValidation request validation via `AddResourceValidation`. |
 
 Multi-targeted at **net8.0** and **net10.0**.
@@ -200,7 +248,7 @@ app.MapResources();
 app.Run();
 ```
 
-A complete runnable example lives in [`Crestful.Sample`](Crestful.Sample) — a device domain with a `Reading` sub-resource, EF Core persistence, seeded data, and validation.
+A complete runnable example lives in [`Crestful.Sample`](Crestful.Sample), a device domain with a `Reading` sub-resource, EF Core persistence, seeded data, and validation.
 
 ## Generated Endpoints
 
@@ -215,15 +263,15 @@ For a resource `Device` (key `int`), with the default `api` route prefix:
 | `PATCH` | `/api/devices/{id}` | Partially update a device |
 | `DELETE` | `/api/devices/{id}` | Delete a device |
 
-Keys are discovered by convention — `[Key]`, `Id`, `{TypeName}Id`, or the type name with a trailing `Resource` stripped — and may be numeric, `Guid`, or `string`. Related resources are plain `IResource` classes with a foreign key; send a nested graph in one request and it persists in a single transaction.
+Keys are discovered by convention (`[Key]`, `Id`, `{TypeName}Id`, or the type name with a trailing `Resource` stripped) and may be numeric, `Guid`, or `string`. Related resources are plain `IResource` classes with a foreign key; send a nested graph in one request and it persists in a single transaction.
 
-> **Note on behavior toggles:** The endpoints above are the same regardless of features, but the behavior can change. With soft delete enabled, `DELETE` stamps `DeletedAt` instead of removing, `GET`/`GET /{id}` hide soft-deleted items, and `PUT`/`PATCH` restore them. With auditing enabled, `POST`/`PUT`/`PATCH` populate `CreatedAt`/`UpdatedAt`/`CreatedBy`/`UpdatedBy` automatically. See [Soft Delete](#soft-delete) and [Auditing](#auditing).
+> **Note on behavior toggles:** The endpoints above are the same regardless of features, but the behavior can change. With soft delete enabled, `DELETE` stamps `DeletedAt` instead of removing, `GET`/`GET /{id}` hide soft-deleted items, and `PUT`/`PATCH` restore them. With auditing enabled, `POST`/`PUT`/`PATCH` populate `CreatedAt`/`UpdatedAt`/`CreatedBy`/`UpdatedBy` automatically. With concurrency enabled, `GET /{id}` returns `ETag` and `Last-Modified`, `PUT`/`PATCH`/`DELETE` require a matching `If-Match` (428 if absent, 412 if stale), and a conditional `GET` can return 304. See [Soft Delete](#soft-delete), [Auditing](#auditing), and [Concurrency](#concurrency).
 
 ## Supported Frameworks
 
 - **.NET 8+**: `net8.0` and `net10.0` packages.
-- **ASP.NET Core Minimal APIs**: built on routing, DI, and ProblemDetails — no framework-specific hosting.
+- **ASP.NET Core Minimal APIs**: built on routing, DI, and ProblemDetails, with no framework-specific hosting.
 
 ## Documentation
 
-- [Getting started](docs/GETTING_STARTED.md) — resources, keys, persistence, validation, hooks, query engine, soft delete, auditing, and custom endpoints.
+- [Getting started](docs/GETTING_STARTED.md): resources, keys, persistence, validation, hooks, query engine, soft delete, auditing, and custom endpoints.
